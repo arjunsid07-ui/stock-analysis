@@ -14,9 +14,13 @@ This server is used to get news and recommendations about a given ticker symbol 
 
 Available tools:
 - get_yahoo_finance_news: Get news for a given ticker symbol from yahoo finance.
-- get_recommendations: Get recommendations or upgrades/downgrades for a given ticker symbol from yahoo finance.
+- get_recommendations: Get recommendations or upgrades/downgrades for a given ticker symbol from yahoo finance. You can also specify the number of months back to get upgrades/downgrades for, default is 12.
 """,
 )
+
+def save_to_json(filename, data):
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=4)
 
 @news_recommendations_server.tool(
     name="get_yahoo_finance_news",
@@ -48,11 +52,13 @@ async def get_yahoo_finance_news(ticker: str) -> str:
             description = news.get("content", {}).get("description", "")
             url = news.get("content", {}).get("canonicalUrl", {}).get("url", "")
             news_list.append(
-                f"Title: {title}\nSummary: {summary}\nDescription: {description}\nURL: {url}"
+                {"title": title, "summary": summary, "description": description, "url": url}
             )
     if not news_list:
         return f"No news found for company that searched with {ticker} ticker."
-    return "\n\n".join(news_list)
+    
+    save_to_json(f"{ticker}_news.json", news_list)
+    return json.dumps(news_list)
 
 @news_recommendations_server.tool(
     name="get_recommendations",
@@ -76,7 +82,9 @@ async def get_recommendations(ticker: str, recommendation_type: str, months_back
         return f"Error: getting recommendations for {ticker}: {e}"
     try:
         if recommendation_type == "recommendations":
-            return company.recommendations.to_json(orient="records")
+            recommendations = company.recommendations.to_json(orient="records")
+            save_to_json(f"{ticker}_recommendations.json", json.loads(recommendations))
+            return recommendations
         elif recommendation_type == "upgrades_downgrades":
             upgrades_downgrades = company.upgrades_downgrades.reset_index()
             cutoff_date = pd.Timestamp.now() - pd.DateOffset(months=months_back)
@@ -85,7 +93,9 @@ async def get_recommendations(ticker: str, recommendation_type: str, months_back
             ]
             upgrades_downgrades = upgrades_downgrades.sort_values("GradeDate", ascending=False)
             latest_by_firm = upgrades_downgrades.drop_duplicates(subset=["Firm"])
-            return latest_by_firm.to_json(orient="records", date_format="iso")
+            json_data = latest_by_firm.to_json(orient="records", date_format="iso")
+            save_to_json(f"{ticker}_upgrades_downgrades.json", json.loads(json_data))
+            return json_data
     except Exception as e:
         return f"Error: getting recommendations for {ticker}: {e}"
 

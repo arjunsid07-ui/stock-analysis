@@ -2,6 +2,7 @@
 import yfinance as yf
 import pandas as pd
 from mcp.server.fastmcp import FastMCP
+import json
 
 # Initialize FastMCP server for financial analysis
 financial_analysis_server = FastMCP(
@@ -12,10 +13,14 @@ financial_analysis_server = FastMCP(
 This server is used to get financial analysis information about a given ticker symbol from yahoo finance.
 
 Available tools:
-- get_historical_stock_prices: Get historical stock prices for a given ticker symbol from yahoo finance.
+- get_historical_stock_prices: Get historical stock prices for a given ticker symbol from yahoo finance. Include the following information: Date, Open, High, Low, Close, Volume, Adj Close.
 - get_stock_actions: Get stock dividends and stock splits for a given ticker symbol from yahoo finance.
 """,
 )
+
+def save_to_json(filename, data):
+    with open(filename, 'w') as f:
+        json.dump(data, f, indent=4)
 
 @financial_analysis_server.tool(
     name="get_historical_stock_prices",
@@ -40,7 +45,9 @@ async def get_historical_stock_prices(ticker: str, period: str = "1mo", interval
 
     hist_data = company.history(period=period, interval=interval)
     hist_data = hist_data.reset_index(names="Date")
-    return hist_data.to_json(orient="records", date_format="iso")
+    json_data = hist_data.to_json(orient="records", date_format="iso")
+    save_to_json(f"{ticker}_historical_prices.json", json.loads(json_data))
+    return json_data
 
 @financial_analysis_server.tool(
     name="get_stock_actions",
@@ -58,7 +65,9 @@ async def get_stock_actions(ticker: str) -> str:
         return f"Error: getting stock actions for {ticker}: {e}"
     actions_df = company.actions
     actions_df = actions_df.reset_index(names="Date")
-    return actions_df.to_json(orient="records", date_format="iso")
+    json_data = actions_df.to_json(orient="records", date_format="iso")
+    save_to_json(f"{ticker}_stock_actions.json", json.loads(json_data))
+    return json_data
 
 if __name__ == "__main__":
     print("Starting Financial Analysis MCP server...")
