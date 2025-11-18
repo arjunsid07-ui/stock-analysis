@@ -1,0 +1,237 @@
+[
+    {
+        "Date": "1996-02-26T00:00:00.000Z",
+        "Dividends": 5.0671,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "1996-08-04T23:00:00.000Z",
+        "Dividends": 2.7285001,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "1997-02-24T00:00:00.000Z",
+        "Dividends": 5.8467,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "1997-08-10T23:00:00.000Z",
+        "Dividends": 3.443,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "1998-02-23T00:00:00.000Z",
+        "Dividends": 7.7306004,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "1998-08-09T23:00:00.000Z",
+        "Dividends": 4.3525,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "1999-02-22T00:00:00.000Z",
+        "Dividends": 10.069301,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "1999-08-08T23:00:00.000Z",
+        "Dividends": 5.262,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2000-02-21T00:00:00.000Z",
+        "Dividends": 12.0182,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2000-08-06T23:00:00.000Z",
+        "Dividends": 6.0416,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2001-02-28T00:00:00.000Z",
+        "Dividends": 13.837101,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2001-08-07T23:00:00.000Z",
+        "Dividends": 6.6261997,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2002-02-27T00:00:00.000Z",
+        "Dividends": 15.266301,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2002-08-13T23:00:00.000Z",
+        "Dividends": 6.9510994,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2003-02-26T00:00:00.000Z",
+        "Dividends": 15.266301,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2003-08-12T23:00:00.000Z",
+        "Dividends": 6.9510994,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2004-03-17T00:00:00.000Z",
+        "Dividends": 15.266301,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2004-08-10T23:00:00.000Z",
+        "Dividends": 6.9510994,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2005-03-16T00:00:00.000Z",
+        "Dividends": 15.266301,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2005-08-09T23:00:00.000Z",
+        "Dividends": 6.9510994,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2006-03-08T00:00:00.000Z",
+        "Dividends": 15.266301,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2006-08-08T23:00:00.000Z",
+        "Dividends": 6.9510994,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2007-03-07T00:00:00.000Z",
+        "Dividends": 15.266301,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2007-08-07T23:00:00.000Z",
+        "Dividends": 7.2759004,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2008-03-05T00:00:00.000Z",
+        "Dividends": 16.0459,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2008-08-05T23:00:00.000Z",
+        "Dividends": 7.4058003,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2009-05-10T23:00:00.000Z",
+        "Dividends": 0.0,
+        "Stock Splits": 1.025
+    },
+    {
+        "Date": "2015-04-01T23:00:00.000Z",
+        "Dividends": 0.75,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2015-08-12T23:00:00.000Z",
+        "Dividends": 0.75,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2016-04-06T23:00:00.000Z",
+        "Dividends": 2.0,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2016-08-10T23:00:00.000Z",
+        "Dividends": 0.85,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2017-04-05T23:00:00.000Z",
+        "Dividends": 2.2,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2017-08-09T23:00:00.000Z",
+        "Dividends": 1.0,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2018-04-18T23:00:00.000Z",
+        "Dividends": 2.05,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2018-08-15T23:00:00.000Z",
+        "Dividends": 1.07,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2019-04-03T23:00:00.000Z",
+        "Dividends": 2.14,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2019-08-07T23:00:00.000Z",
+        "Dividends": 1.12,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2021-04-14T23:00:00.000Z",
+        "Dividends": 0.57,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2021-08-04T23:00:00.000Z",
+        "Dividends": 0.66999996,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2022-04-06T23:00:00.000Z",
+        "Dividends": 1.3299999,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2022-08-03T23:00:00.000Z",
+        "Dividends": 0.8,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2023-04-12T23:00:00.000Z",
+        "Dividends": 1.6,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2023-08-02T23:00:00.000Z",
+        "Dividends": 0.92,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2024-04-10T23:00:00.000Z",
+        "Dividends": 1.84,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2024-07-31T23:00:00.000Z",
+        "Dividends": 1.06,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2025-04-09T23:00:00.000Z",
+        "Dividends": 2.11,
+        "Stock Splits": 0.0
+    },
+    {
+        "Date": "2025-07-30T23:00:00.000Z",
+        "Dividends": 1.22,
+        "Stock Splits": 0.0
+    }
+]

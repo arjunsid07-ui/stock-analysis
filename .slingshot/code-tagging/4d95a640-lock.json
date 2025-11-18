@@ -1,0 +1,477 @@
+{
+  "financial_analysis_mcp.py": {
+    "f": "financial_analysis_mcp.py",
+    "p": "financial_analysis_mcp.py",
+    "v": "v1",
+    "c": {
+      "37b374": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763302555,
+        "hash": "b7574734",
+        "messageId": "system_7fdbcce0-c2f6-11f0-abd1-5b53f1a1163d",
+        "codeBlockId": "system_7fdbcce0-c2f6-11f0-abd1-5b53f1a1163d-Codeblock-3",
+        "isActive": true,
+        "type": "insertCode"
+      },
+      "6427f6": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306404,
+        "hash": "1439b85d",
+        "messageId": "system_58db6e30-c2ff-11f0-abd1-5b53f1a1163d",
+        "codeBlockId": null,
+        "isActive": true,
+        "type": "applyChanges"
+      },
+      "5e4af9": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306425,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "4d80c9": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306428,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "fcb055": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306431,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      }
+    },
+    "l": {
+      "1": {
+        "chunkId": "37b374",
+        "hash": "5d9c4e7f",
+        "encoded": "import%20yfinance%20as%20yf",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "2": {
+        "chunkId": "37b374",
+        "hash": "77efaf04",
+        "encoded": "import%20pandas%20as%20pd",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "4": {
+        "chunkId": "37b374",
+        "hash": "1c2357e0",
+        "encoded": "from%20mcp.server.fastmcp%20import%20FastMCP",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "5": {
+        "chunkId": "6427f6",
+        "hash": "b067e8c1",
+        "encoded": "import%20json",
+        "prevChunkIds": []
+      },
+      "7": {
+        "chunkId": "6427f6",
+        "hash": "11b8288b",
+        "encoded": "#%20Initialize%20FastMCP%20server%20for%20financial%20analysis",
+        "prevChunkIds": []
+      },
+      "8": {
+        "chunkId": "6427f6",
+        "hash": "379479bc",
+        "encoded": "financial_analysis_server%20=%20FastMCP(",
+        "prevChunkIds": []
+      },
+      "9": {
+        "chunkId": "6427f6",
+        "hash": "41b0c1a4",
+        "encoded": "%22financial_analysis%22,",
+        "prevChunkIds": []
+      },
+      "10": {
+        "chunkId": "37b374",
+        "hash": "70fa6a00",
+        "encoded": "instructions=%22%22%22",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "11": {
+        "chunkId": "6427f6",
+        "hash": "0ce41c84",
+        "encoded": "#%20Financial%20Analysis%20MCP%20Server",
+        "prevChunkIds": []
+      },
+      "13": {
+        "chunkId": "6427f6",
+        "hash": "898917ea",
+        "encoded": "This%20server%20is%20used%20to%20get%20financial%20analysis%20information%20about%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.",
+        "prevChunkIds": []
+      },
+      "15": {
+        "chunkId": "37b374",
+        "hash": "07511170",
+        "encoded": "Available%20tools:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "17": {
+        "chunkId": "6427f6",
+        "hash": "c45d7abd",
+        "encoded": "-%20get_stock_actions:%20Get%20stock%20dividends%20and%20stock%20splits%20for%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.",
+        "prevChunkIds": []
+      },
+      "18": {
+        "chunkId": "37b374",
+        "hash": "2e4e5673",
+        "encoded": "%22%22%22,",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "19": {
+        "chunkId": "37b374",
+        "hash": "98327f2d",
+        "encoded": ")",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "24": {
+        "chunkId": "6427f6",
+        "hash": "3864cadd",
+        "encoded": "def%20save_to_json(filename,%20data):",
+        "prevChunkIds": []
+      },
+      "28": {
+        "chunkId": "6427f6",
+        "hash": "451db789",
+        "encoded": "json.dump(data,%20f,%20indent=4)",
+        "prevChunkIds": []
+      },
+      "30": {
+        "chunkId": "6427f6",
+        "hash": "eb72cd66",
+        "encoded": "@financial_analysis_server.tool(",
+        "prevChunkIds": []
+      },
+      "31": {
+        "chunkId": "6427f6",
+        "hash": "e7533c20",
+        "encoded": "name=%22get_historical_stock_prices%22,",
+        "prevChunkIds": []
+      },
+      "32": {
+        "chunkId": "6427f6",
+        "hash": "82230be4",
+        "encoded": "description=%22%22%22Get%20historical%20stock%20prices%20for%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.",
+        "prevChunkIds": []
+      },
+      "34": {
+        "chunkId": "37b374",
+        "hash": "e8846894",
+        "encoded": "Args:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "35": {
+        "chunkId": "37b374",
+        "hash": "b820d594",
+        "encoded": "ticker:%20str",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "36": {
+        "chunkId": "6427f6",
+        "hash": "95d87681",
+        "encoded": "The%20ticker%20symbol%20of%20the%20stock%20to%20get%20historical%20prices%20for,%20e.g.%20%22AAPL%22",
+        "prevChunkIds": []
+      },
+      "37": {
+        "chunkId": "6427f6",
+        "hash": "8b7402c0",
+        "encoded": "period%20:%20str",
+        "prevChunkIds": []
+      },
+      "38": {
+        "chunkId": "6427f6",
+        "hash": "d653c555",
+        "encoded": "Valid%20periods:%201d,5d,1mo,3mo,6mo,1y,2y,5y,10y,ytd,max",
+        "prevChunkIds": []
+      },
+      "39": {
+        "chunkId": "6427f6",
+        "hash": "c7cf9345",
+        "encoded": "interval%20:%20str",
+        "prevChunkIds": []
+      },
+      "40": {
+        "chunkId": "6427f6",
+        "hash": "65e2fb4e",
+        "encoded": "Valid%20intervals:%201m,2m,5m,15m,30m,60m,90m,1h,1d,5d,1wk,1mo,3mo",
+        "prevChunkIds": []
+      },
+      "41": {
+        "chunkId": "37b374",
+        "hash": "81649b08",
+        "encoded": "%22%22%22,",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "42": {
+        "chunkId": "37b374",
+        "hash": "a1df8512",
+        "encoded": ")",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "43": {
+        "chunkId": "6427f6",
+        "hash": "e3a92d5a",
+        "encoded": "async%20def%20get_historical_stock_prices(ticker:%20str,%20period:%20str%20=%20%221mo%22,%20interval:%20str%20=%20%221d%22)%20-%3E%20str:",
+        "prevChunkIds": []
+      },
+      "44": {
+        "chunkId": "37b374",
+        "hash": "7493f493",
+        "encoded": "company%20=%20yf.Ticker(ticker)",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "45": {
+        "chunkId": "37b374",
+        "hash": "8711aa1c",
+        "encoded": "try:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "46": {
+        "chunkId": "37b374",
+        "hash": "788de5ef",
+        "encoded": "if%20company.isin%20is%20None:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "47": {
+        "chunkId": "37b374",
+        "hash": "0ab0dfcd",
+        "encoded": "return%20f%22Company%20ticker%20%7Bticker%7D%20not%20found.%22",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "48": {
+        "chunkId": "37b374",
+        "hash": "a2c2d9d4",
+        "encoded": "except%20Exception%20as%20e:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "49": {
+        "chunkId": "6427f6",
+        "hash": "86a77ee0",
+        "encoded": "return%20f%22Error:%20getting%20historical%20stock%20prices%20for%20%7Bticker%7D:%20%7Be%7D%22",
+        "prevChunkIds": []
+      },
+      "51": {
+        "chunkId": "6427f6",
+        "hash": "88ad7eac",
+        "encoded": "hist_data%20=%20company.history(period=period,%20interval=interval)",
+        "prevChunkIds": []
+      },
+      "52": {
+        "chunkId": "6427f6",
+        "hash": "fd4739ec",
+        "encoded": "hist_data%20=%20hist_data.reset_index(names=%22Date%22)",
+        "prevChunkIds": []
+      },
+      "53": {
+        "chunkId": "6427f6",
+        "hash": "8de9e7bf",
+        "encoded": "json_data%20=%20hist_data.to_json(orient=%22records%22,%20date_format=%22iso%22)",
+        "prevChunkIds": []
+      },
+      "54": {
+        "chunkId": "6427f6",
+        "hash": "1467ce12",
+        "encoded": "save_to_json(f%22%7Bticker%7D_historical_prices.json%22,%20json.loads(json_data))",
+        "prevChunkIds": []
+      },
+      "55": {
+        "chunkId": "6427f6",
+        "hash": "e97ede0a",
+        "encoded": "return%20json_data",
+        "prevChunkIds": []
+      },
+      "57": {
+        "chunkId": "6427f6",
+        "hash": "2a7cf106",
+        "encoded": "@financial_analysis_server.tool(",
+        "prevChunkIds": []
+      },
+      "58": {
+        "chunkId": "6427f6",
+        "hash": "da1778be",
+        "encoded": "name=%22get_stock_actions%22,",
+        "prevChunkIds": []
+      },
+      "59": {
+        "chunkId": "6427f6",
+        "hash": "40be5d3b",
+        "encoded": "description=%22%22%22Get%20stock%20dividends%20and%20stock%20splits%20for%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.",
+        "prevChunkIds": []
+      },
+      "61": {
+        "chunkId": "37b374",
+        "hash": "8ca56800",
+        "encoded": "Args:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "62": {
+        "chunkId": "37b374",
+        "hash": "591d46be",
+        "encoded": "ticker:%20str",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "63": {
+        "chunkId": "6427f6",
+        "hash": "b1128893",
+        "encoded": "The%20ticker%20symbol%20of%20the%20stock%20to%20get%20stock%20actions%20for,%20e.g.%20%22AAPL%22",
+        "prevChunkIds": []
+      },
+      "64": {
+        "chunkId": "37b374",
+        "hash": "f44bddac",
+        "encoded": "%22%22%22,",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "65": {
+        "chunkId": "37b374",
+        "hash": "611dfc24",
+        "encoded": ")",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "66": {
+        "chunkId": "6427f6",
+        "hash": "5877c664",
+        "encoded": "async%20def%20get_stock_actions(ticker:%20str)%20-%3E%20str:",
+        "prevChunkIds": []
+      },
+      "67": {
+        "chunkId": "37b374",
+        "hash": "71f4293d",
+        "encoded": "try:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "68": {
+        "chunkId": "37b374",
+        "hash": "73d0df32",
+        "encoded": "company%20=%20yf.Ticker(ticker)",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "69": {
+        "chunkId": "37b374",
+        "hash": "198081bb",
+        "encoded": "except%20Exception%20as%20e:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "70": {
+        "chunkId": "6427f6",
+        "hash": "51a3da7d",
+        "encoded": "return%20f%22Error:%20getting%20stock%20actions%20for%20%7Bticker%7D:%20%7Be%7D%22",
+        "prevChunkIds": []
+      },
+      "71": {
+        "chunkId": "6427f6",
+        "hash": "692753d3",
+        "encoded": "actions_df%20=%20company.actions",
+        "prevChunkIds": []
+      },
+      "72": {
+        "chunkId": "6427f6",
+        "hash": "811e23a5",
+        "encoded": "actions_df%20=%20actions_df.reset_index(names=%22Date%22)",
+        "prevChunkIds": []
+      },
+      "73": {
+        "chunkId": "6427f6",
+        "hash": "8f94e119",
+        "encoded": "json_data%20=%20actions_df.to_json(orient=%22records%22,%20date_format=%22iso%22)",
+        "prevChunkIds": []
+      },
+      "74": {
+        "chunkId": "6427f6",
+        "hash": "4f820b8c",
+        "encoded": "save_to_json(f%22%7Bticker%7D_stock_actions.json%22,%20json.loads(json_data))",
+        "prevChunkIds": []
+      },
+      "75": {
+        "chunkId": "6427f6",
+        "hash": "9e3d18b7",
+        "encoded": "return%20json_data",
+        "prevChunkIds": []
+      },
+      "77": {
+        "chunkId": "6427f6",
+        "hash": "14ec5307",
+        "encoded": "if%20__name__%20==%20%22__main__%22:",
+        "prevChunkIds": [
+          "37b374"
+        ]
+      },
+      "78": {
+        "chunkId": "6427f6",
+        "hash": "07cdb841",
+        "encoded": "print(%22Starting%20Financial%20Analysis%20MCP%20server...%22)",
+        "prevChunkIds": []
+      },
+      "79": {
+        "chunkId": "6427f6",
+        "hash": "73356359",
+        "encoded": "financial_analysis_server.run(transport=%22stdio%22)",
+        "prevChunkIds": []
+      }
+    }
+  }
+}

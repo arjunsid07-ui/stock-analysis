@@ -1,5 +1,6 @@
  # Code generated via "Slingshot" 
 import json
+import os
 import yfinance as yf
 import pandas as pd
 from mcp.server.fastmcp import FastMCP
@@ -18,8 +19,13 @@ Available tools:
 """,
 )
 
+# Ensure the 'data' directory exists
+os.makedirs('data', exist_ok=True)
+
 def save_to_json(filename, data):
-    with open(filename, 'w') as f:
+    # CHANGE: Save JSON files in the 'data' directory
+    filepath = os.path.join('data', filename)
+    with open(filepath, 'w') as f:
         json.dump(data, f, indent=4)
 
 @news_recommendations_server.tool(

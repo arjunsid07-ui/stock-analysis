@@ -1,0 +1,898 @@
+{
+  "news_recommendations_mcp.py": {
+    "f": "news_recommendations_mcp.py",
+    "p": "news_recommendations_mcp.py",
+    "v": "v1",
+    "c": {
+      "04d392": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306358,
+        "hash": "7169d18c",
+        "messageId": "system_58db6e30-c2ff-11f0-abd1-5b53f1a1163d",
+        "codeBlockId": null,
+        "isActive": true,
+        "type": "applyChanges"
+      },
+      "dffca0": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306359,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "3b2fac": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306366,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "e553ad": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306372,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "b83f4d": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763306375,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "70cc61": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763358475,
+        "hash": "69be2942",
+        "messageId": "system_e6c41f70-c378-11f0-abd1-5b53f1a1163d",
+        "codeBlockId": "system_e6c41f70-c378-11f0-abd1-5b53f1a1163d-Codeblock-1",
+        "isActive": false,
+        "type": "insertCode"
+      },
+      "a07e3d": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763358500,
+        "hash": "69be2942",
+        "messageId": "system_e6c41f70-c378-11f0-abd1-5b53f1a1163d",
+        "codeBlockId": null,
+        "isActive": true,
+        "type": "applyChanges"
+      },
+      "75dbac": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763358501,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "cab417": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763358503,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "0a7ad7": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763358506,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "0a8fe2": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763358534,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "dbe3f0": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763358535,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      },
+      "5177c4": {
+        "user": "Arjun Sidana",
+        "model": "gpt-4o",
+        "extraContext": "tbd",
+        "timestamp": 1763358536,
+        "hash": "00000000",
+        "messageId": "6f4cfa65-89ba-453f-8e86-4198a39c1282",
+        "codeBlockId": null,
+        "isActive": false
+      }
+    },
+    "l": {
+      "1": {
+        "chunkId": "04d392",
+        "hash": "a7170571",
+        "encoded": "import%20json",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "2": {
+        "chunkId": "a07e3d",
+        "hash": "b019e1d1",
+        "encoded": "import%20os",
+        "prevChunkIds": []
+      },
+      "3": {
+        "chunkId": "04d392",
+        "hash": "8e2660d9",
+        "encoded": "import%20yfinance%20as%20yf",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "4": {
+        "chunkId": "04d392",
+        "hash": "703b4fc2",
+        "encoded": "import%20pandas%20as%20pd",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "5": {
+        "chunkId": "04d392",
+        "hash": "8bb8fbfc",
+        "encoded": "from%20mcp.server.fastmcp%20import%20FastMCP",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "7": {
+        "chunkId": "04d392",
+        "hash": "1b702dea",
+        "encoded": "#%20Initialize%20FastMCP%20server%20for%20news%20and%20recommendations",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "8": {
+        "chunkId": "04d392",
+        "hash": "09ee1758",
+        "encoded": "news_recommendations_server%20=%20FastMCP(",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "9": {
+        "chunkId": "04d392",
+        "hash": "2239fc11",
+        "encoded": "%22news_recommendations%22,",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "10": {
+        "chunkId": "04d392",
+        "hash": "70fa6a00",
+        "encoded": "instructions=%22%22%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "11": {
+        "chunkId": "04d392",
+        "hash": "41b4cda3",
+        "encoded": "#%20News%20and%20Recommendations%20MCP%20Server",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "13": {
+        "chunkId": "04d392",
+        "hash": "74bd281c",
+        "encoded": "This%20server%20is%20used%20to%20get%20news%20and%20recommendations%20about%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "15": {
+        "chunkId": "04d392",
+        "hash": "07511170",
+        "encoded": "Available%20tools:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "16": {
+        "chunkId": "04d392",
+        "hash": "989c2cec",
+        "encoded": "-%20get_yahoo_finance_news:%20Get%20news%20for%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "17": {
+        "chunkId": "a07e3d",
+        "hash": "24463ca5",
+        "encoded": "-%20get_recommendations:%20Get%20recommendations%20or%20upgrades/downgrades%20for%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.%20You%20can%20also%20specify%20the%20number%20of%20months%20back%20to%20get%20upgrades/downgrades%20for,%20default%20is%2012.",
+        "prevChunkIds": []
+      },
+      "18": {
+        "chunkId": "a07e3d",
+        "hash": "2e4e5673",
+        "encoded": "%22%22%22,",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "19": {
+        "chunkId": "a07e3d",
+        "hash": "98327f2d",
+        "encoded": ")",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "21": {
+        "chunkId": "a07e3d",
+        "hash": "68d2add1",
+        "encoded": "#%20Ensure%20the%20'data'%20directory%20exists",
+        "prevChunkIds": []
+      },
+      "22": {
+        "chunkId": "a07e3d",
+        "hash": "e7fa1c56",
+        "encoded": "os.makedirs('data',%20exist_ok=True)",
+        "prevChunkIds": []
+      },
+      "24": {
+        "chunkId": "a07e3d",
+        "hash": "3864cadd",
+        "encoded": "def%20save_to_json(filename,%20data):",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "25": {
+        "chunkId": "a07e3d",
+        "hash": "2df67349",
+        "encoded": "#%20CHANGE:%20Save%20JSON%20files%20in%20the%20'data'%20directory",
+        "prevChunkIds": []
+      },
+      "26": {
+        "chunkId": "a07e3d",
+        "hash": "ccc34f33",
+        "encoded": "filepath%20=%20os.path.join('data',%20filename)",
+        "prevChunkIds": []
+      },
+      "27": {
+        "chunkId": "a07e3d",
+        "hash": "82263479",
+        "encoded": "with%20open(filepath,%20'w')%20as%20f:",
+        "prevChunkIds": []
+      },
+      "28": {
+        "chunkId": "a07e3d",
+        "hash": "451db789",
+        "encoded": "json.dump(data,%20f,%20indent=4)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "30": {
+        "chunkId": "a07e3d",
+        "hash": "c87f4cfc",
+        "encoded": "@news_recommendations_server.tool(",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "31": {
+        "chunkId": "a07e3d",
+        "hash": "522ad7ff",
+        "encoded": "name=%22get_yahoo_finance_news%22,",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "32": {
+        "chunkId": "a07e3d",
+        "hash": "7b5b76fe",
+        "encoded": "description=%22%22%22Get%20news%20for%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "34": {
+        "chunkId": "a07e3d",
+        "hash": "e8846894",
+        "encoded": "Args:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "35": {
+        "chunkId": "a07e3d",
+        "hash": "b820d594",
+        "encoded": "ticker:%20str",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "36": {
+        "chunkId": "a07e3d",
+        "hash": "6a8c8ee4",
+        "encoded": "The%20ticker%20symbol%20of%20the%20stock%20to%20get%20news%20for,%20e.g.%20%22AAPL%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "37": {
+        "chunkId": "a07e3d",
+        "hash": "491bd6e7",
+        "encoded": "%22%22%22,",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "38": {
+        "chunkId": "a07e3d",
+        "hash": "e30cf15e",
+        "encoded": ")",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "39": {
+        "chunkId": "a07e3d",
+        "hash": "56901cf2",
+        "encoded": "async%20def%20get_yahoo_finance_news(ticker:%20str)%20-%3E%20str:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "40": {
+        "chunkId": "a07e3d",
+        "hash": "a08566d1",
+        "encoded": "company%20=%20yf.Ticker(ticker)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "41": {
+        "chunkId": "a07e3d",
+        "hash": "791973da",
+        "encoded": "try:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "42": {
+        "chunkId": "a07e3d",
+        "hash": "b621d3ae",
+        "encoded": "if%20company.isin%20is%20None:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "43": {
+        "chunkId": "a07e3d",
+        "hash": "499a90b9",
+        "encoded": "return%20f%22Company%20ticker%20%7Bticker%7D%20not%20found.%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "44": {
+        "chunkId": "a07e3d",
+        "hash": "b86792ed",
+        "encoded": "except%20Exception%20as%20e:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "45": {
+        "chunkId": "a07e3d",
+        "hash": "4b8637b5",
+        "encoded": "return%20f%22Error:%20getting%20news%20for%20%7Bticker%7D:%20%7Be%7D%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "47": {
+        "chunkId": "a07e3d",
+        "hash": "7ca27a38",
+        "encoded": "try:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "48": {
+        "chunkId": "a07e3d",
+        "hash": "1f4613d8",
+        "encoded": "news%20=%20company.news",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "49": {
+        "chunkId": "a07e3d",
+        "hash": "76d9e712",
+        "encoded": "except%20Exception%20as%20e:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "50": {
+        "chunkId": "a07e3d",
+        "hash": "19f10e21",
+        "encoded": "return%20f%22Error:%20getting%20news%20for%20%7Bticker%7D:%20%7Be%7D%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "52": {
+        "chunkId": "a07e3d",
+        "hash": "06899732",
+        "encoded": "news_list%20=%20%5B%5D",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "53": {
+        "chunkId": "a07e3d",
+        "hash": "5aade510",
+        "encoded": "for%20news%20in%20company.news:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "54": {
+        "chunkId": "a07e3d",
+        "hash": "1e344156",
+        "encoded": "if%20news.get(%22content%22,%20%7B%7D).get(%22contentType%22,%20%22%22)%20==%20%22STORY%22:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "55": {
+        "chunkId": "a07e3d",
+        "hash": "fe986895",
+        "encoded": "title%20=%20news.get(%22content%22,%20%7B%7D).get(%22title%22,%20%22%22)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "56": {
+        "chunkId": "a07e3d",
+        "hash": "480bca8b",
+        "encoded": "summary%20=%20news.get(%22content%22,%20%7B%7D).get(%22summary%22,%20%22%22)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "57": {
+        "chunkId": "a07e3d",
+        "hash": "d4f148ef",
+        "encoded": "description%20=%20news.get(%22content%22,%20%7B%7D).get(%22description%22,%20%22%22)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "58": {
+        "chunkId": "a07e3d",
+        "hash": "9172f839",
+        "encoded": "url%20=%20news.get(%22content%22,%20%7B%7D).get(%22canonicalUrl%22,%20%7B%7D).get(%22url%22,%20%22%22)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "59": {
+        "chunkId": "a07e3d",
+        "hash": "c442abb5",
+        "encoded": "news_list.append(",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "60": {
+        "chunkId": "a07e3d",
+        "hash": "5b9780f5",
+        "encoded": "%7B%22title%22:%20title,%20%22summary%22:%20summary,%20%22description%22:%20description,%20%22url%22:%20url%7D",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "61": {
+        "chunkId": "a07e3d",
+        "hash": "6ee75845",
+        "encoded": ")",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "62": {
+        "chunkId": "a07e3d",
+        "hash": "6935940d",
+        "encoded": "if%20not%20news_list:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "63": {
+        "chunkId": "a07e3d",
+        "hash": "fa2a1eaf",
+        "encoded": "return%20f%22No%20news%20found%20for%20company%20that%20searched%20with%20%7Bticker%7D%20ticker.%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "65": {
+        "chunkId": "a07e3d",
+        "hash": "23b98f60",
+        "encoded": "save_to_json(f%22%7Bticker%7D_news.json%22,%20news_list)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "66": {
+        "chunkId": "a07e3d",
+        "hash": "b19a1569",
+        "encoded": "return%20json.dumps(news_list)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "68": {
+        "chunkId": "a07e3d",
+        "hash": "fe9337c9",
+        "encoded": "@news_recommendations_server.tool(",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "69": {
+        "chunkId": "a07e3d",
+        "hash": "c4beddea",
+        "encoded": "name=%22get_recommendations%22,",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "70": {
+        "chunkId": "a07e3d",
+        "hash": "5f70c498",
+        "encoded": "description=%22%22%22Get%20recommendations%20or%20upgrades/downgrades%20for%20a%20given%20ticker%20symbol%20from%20yahoo%20finance.",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "72": {
+        "chunkId": "a07e3d",
+        "hash": "ac537328",
+        "encoded": "Args:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "73": {
+        "chunkId": "a07e3d",
+        "hash": "52112837",
+        "encoded": "ticker:%20str",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "74": {
+        "chunkId": "a07e3d",
+        "hash": "3975a600",
+        "encoded": "The%20ticker%20symbol%20of%20the%20stock%20to%20get%20recommendations%20for,%20e.g.%20%22AAPL%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "75": {
+        "chunkId": "a07e3d",
+        "hash": "f0b731b0",
+        "encoded": "recommendation_type:%20str",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "76": {
+        "chunkId": "a07e3d",
+        "hash": "4ff1ac6b",
+        "encoded": "The%20type%20of%20recommendation%20to%20get.",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "77": {
+        "chunkId": "a07e3d",
+        "hash": "3f713d5b",
+        "encoded": "months_back:%20int",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "78": {
+        "chunkId": "a07e3d",
+        "hash": "0979083b",
+        "encoded": "The%20number%20of%20months%20back%20to%20get%20upgrades/downgrades%20for,%20default%20is%2012.",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "79": {
+        "chunkId": "a07e3d",
+        "hash": "98865309",
+        "encoded": "%22%22%22,",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "80": {
+        "chunkId": "a07e3d",
+        "hash": "399f595c",
+        "encoded": ")",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "81": {
+        "chunkId": "a07e3d",
+        "hash": "64a6835f",
+        "encoded": "async%20def%20get_recommendations(ticker:%20str,%20recommendation_type:%20str,%20months_back:%20int%20=%2012)%20-%3E%20str:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "82": {
+        "chunkId": "a07e3d",
+        "hash": "8e327113",
+        "encoded": "company%20=%20yf.Ticker(ticker)",
+        "prevChunkIds": [
+          "70cc61"
+        ]
+      },
+      "83": {
+        "chunkId": "a07e3d",
+        "hash": "3e1c3840",
+        "encoded": "try:",
+        "prevChunkIds": [
+          "70cc61"
+        ]
+      },
+      "84": {
+        "chunkId": "a07e3d",
+        "hash": "4a4ecd3c",
+        "encoded": "if%20company.isin%20is%20None:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "85": {
+        "chunkId": "a07e3d",
+        "hash": "e34beb83",
+        "encoded": "return%20f%22Company%20ticker%20%7Bticker%7D%20not%20found.%22",
+        "prevChunkIds": [
+          "70cc61"
+        ]
+      },
+      "86": {
+        "chunkId": "a07e3d",
+        "hash": "99fbe4dc",
+        "encoded": "except%20Exception%20as%20e:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "87": {
+        "chunkId": "a07e3d",
+        "hash": "2ca02a29",
+        "encoded": "return%20f%22Error:%20getting%20recommendations%20for%20%7Bticker%7D:%20%7Be%7D%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "88": {
+        "chunkId": "a07e3d",
+        "hash": "acd71397",
+        "encoded": "try:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "89": {
+        "chunkId": "a07e3d",
+        "hash": "d05d3e25",
+        "encoded": "if%20recommendation_type%20==%20%22recommendations%22:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "90": {
+        "chunkId": "a07e3d",
+        "hash": "3f7bc819",
+        "encoded": "recommendations%20=%20company.recommendations.to_json(orient=%22records%22)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "91": {
+        "chunkId": "a07e3d",
+        "hash": "a37538e9",
+        "encoded": "save_to_json(f%22%7Bticker%7D_recommendations.json%22,%20json.loads(recommendations))",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "92": {
+        "chunkId": "a07e3d",
+        "hash": "0bf38c32",
+        "encoded": "return%20recommendations",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "93": {
+        "chunkId": "a07e3d",
+        "hash": "67159cb6",
+        "encoded": "elif%20recommendation_type%20==%20%22upgrades_downgrades%22:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "94": {
+        "chunkId": "a07e3d",
+        "hash": "82559b56",
+        "encoded": "upgrades_downgrades%20=%20company.upgrades_downgrades.reset_index()",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "95": {
+        "chunkId": "a07e3d",
+        "hash": "834cc770",
+        "encoded": "cutoff_date%20=%20pd.Timestamp.now()%20-%20pd.DateOffset(months=months_back)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "96": {
+        "chunkId": "a07e3d",
+        "hash": "f86d79fe",
+        "encoded": "upgrades_downgrades%20=%20upgrades_downgrades%5B",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "97": {
+        "chunkId": "a07e3d",
+        "hash": "dfe65627",
+        "encoded": "upgrades_downgrades%5B%22GradeDate%22%5D%20%3E=%20cutoff_date",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "98": {
+        "chunkId": "a07e3d",
+        "hash": "7030c5e8",
+        "encoded": "%5D",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "99": {
+        "chunkId": "a07e3d",
+        "hash": "114375a3",
+        "encoded": "upgrades_downgrades%20=%20upgrades_downgrades.sort_values(%22GradeDate%22,%20ascending=False)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "100": {
+        "chunkId": "a07e3d",
+        "hash": "afbaa457",
+        "encoded": "latest_by_firm%20=%20upgrades_downgrades.drop_duplicates(subset=%5B%22Firm%22%5D)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "101": {
+        "chunkId": "a07e3d",
+        "hash": "51471926",
+        "encoded": "json_data%20=%20latest_by_firm.to_json(orient=%22records%22,%20date_format=%22iso%22)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "102": {
+        "chunkId": "a07e3d",
+        "hash": "3910ba57",
+        "encoded": "save_to_json(f%22%7Bticker%7D_upgrades_downgrades.json%22,%20json.loads(json_data))",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "103": {
+        "chunkId": "a07e3d",
+        "hash": "c89b3c46",
+        "encoded": "return%20json_data",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "104": {
+        "chunkId": "a07e3d",
+        "hash": "fd86a645",
+        "encoded": "except%20Exception%20as%20e:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "105": {
+        "chunkId": "a07e3d",
+        "hash": "8f727ddc",
+        "encoded": "return%20f%22Error:%20getting%20recommendations%20for%20%7Bticker%7D:%20%7Be%7D%22",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "107": {
+        "chunkId": "a07e3d",
+        "hash": "1cc0f963",
+        "encoded": "if%20__name__%20==%20%22__main__%22:",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "108": {
+        "chunkId": "a07e3d",
+        "hash": "6f962707",
+        "encoded": "print(%22Starting%20News%20and%20Recommendations%20MCP%20server...%22)",
+        "prevChunkIds": [
+          "04d392"
+        ]
+      },
+      "109": {
+        "chunkId": "a07e3d",
+        "hash": "321447b1",
+        "encoded": "news_recommendations_server.run(transport=%22stdio%22)",
+        "prevChunkIds": [
+          "70cc61"
+        ]
+      }
+    }
+  }
+}

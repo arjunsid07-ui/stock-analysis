@@ -1,0 +1,31 @@
+{
+    "mcpServers": {
+        "financial-analysis": {
+            "command": "/Users/arjsidan/.local/bin/uv",
+            "args": [
+                "--directory",
+                "/Users/arjsidan/stock-agent/yahoo-finance-mcp",
+                "run",
+                "financial_analysis_mcp.py"
+            ]
+        },
+        "fundamental-analysis": {
+            "command": "/Users/arjsidan/.local/bin/uv",
+            "args": [
+                "--directory",
+                "/Users/arjsidan/stock-agent/yahoo-finance-mcp",
+                "run",
+                "fundamental_analysis_mcp.py"
+            ]
+        },
+        "news-mcp": {
+            "command": "/Users/arjsidan/.local/bin/uv",
+            "args": [
+                "--directory",
+                "/Users/arjsidan/stock-agent/yahoo-finance-mcp",
+                "run",
+                "news_recommendations_mcp.py"
+            ]
+        }
+    }
+}

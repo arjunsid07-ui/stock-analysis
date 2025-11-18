@@ -1,0 +1,13 @@
+{
+    "mcpServers": {
+        "yfinance": {
+            "command": "/Users/arjsidan/.local/bin/uv",
+            "args": [
+                "--directory",
+                "/Users/arjsidan/stock-agent/yahoo-finance-mcp",
+                "run",
+                "server.py"
+            ]
+        }
+    }
+}
