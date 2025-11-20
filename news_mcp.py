@@ -2,6 +2,7 @@
 import os
 import json
 import re
+import math
 import requests
 from datetime import datetime, timezone, timedelta
 from typing import List, Dict, Optional
@@ -11,7 +12,7 @@ import numpy as np
 import yfinance as yf
 from mcp.server.fastmcp import FastMCP
 
-# Optional NLP imports (graceful fallback)
+# Optional nltk VADER sentiment fallback
 try:
     import nltk
     from nltk.sentiment.vader import SentimentIntensityAnalyzer
@@ -28,13 +29,14 @@ except Exception:
     SentimentIntensityAnalyzer = None
     NLTK_VADER_AVAILABLE = False
 
-# Create server object BEFORE decorators
+
+# Create server BEFORE decorators
 news_server = FastMCP(
     "serp_news",
     instructions="""
-SerpAPI (HTTP) based news MCP: fetch news via SerpAPI Google News endpoint using requests,
-compute relevance, sentiment, novelty, source credibility, market noise (from yfinance),
-and return per-article signal + aggregates. Provide SERPAPI_KEY via env or param.
+SerpAPI (HTTP) based news MCP - UK/London focused search (gl=uk, hl=en-GB).
+Enforces LSE normalization for tickers (adds .L). Computes relevance, sentiment, novelty,
+source credibility and market noise (from yfinance). Returns raw signal + percentage (0-100).
 """,
 )
 
@@ -42,7 +44,6 @@ and return per-article signal + aggregates. Provide SERPAPI_KEY via env or param
 # -------------------------
 # Utilities & heuristics
 # -------------------------
-# Small default credibility map. Replace/extend for production.
 SOURCE_CREDIBILITY_MAP = {
     "ft.com": 0.95,
     "reuters.com": 0.95,
@@ -86,8 +87,6 @@ def compute_sentiment_score(text: str) -> float:
             return (comp + 1.0) / 2.0
         except Exception:
             pass
-
-    # fallback heuristic
     text_l = text.lower()
     pos_words = ["gain", "up", "strong", "beat", "positive", "upgrade", "outperform", "record"]
     neg_words = ["loss", "drop", "down", "weak", "miss", "negative", "downgrade", "lawsuit"]
@@ -116,20 +115,14 @@ def compute_relevance_score(text: str, keywords: List[str]) -> float:
 
 
 def compute_novelty_scores(items: List[Dict]) -> List[float]:
-    """
-    Basic novelty: 1 - max_similarity. We use TF-IDF if sklearn is available; otherwise
-    fallback to duplicate-title heuristic.
-    """
     texts = []
     for it in items:
         txt = " ".join(filter(None, [it.get("title", ""), it.get("snippet", ""), it.get("summary", "")]))
         texts.append(txt or "")
-
     n = len(texts)
     if n == 0:
         return []
-
-    # Try sklearn tfidf/cosine if available
+    # Try sklearn TF-IDF if available
     try:
         from sklearn.feature_extraction.text import TfidfVectorizer
         from sklearn.metrics.pairwise import cosine_similarity
@@ -145,7 +138,6 @@ def compute_novelty_scores(items: List[Dict]) -> List[float]:
             nov.append(float(max(0.0, min(1.0, 1.0 - max_sim))))
         return nov
     except Exception:
-        # fallback: duplicate-title heuristic
         seen = {}
         for t in texts:
             key = t.strip().lower()
@@ -179,19 +171,15 @@ def compute_market_noise(ticker: str, lookback_days: int = 7) -> float:
 
 
 # -------------------------
-# SerpAPI (HTTP) helper
+# SerpAPI (HTTP) helper - UK focused by default (gl=uk, hl=en-GB)
 # -------------------------
 def serpapi_search_news(
     query: str,
     serp_api_key: str,
     num_results: int = 20,
-    language: str = "en",
-    country: str = "us",
+    language: str = "en-GB",
+    country: str = "uk",
 ) -> List[Dict]:
-    """
-    Use SerpAPI HTTP endpoint to fetch Google News results (tbm=nws).
-    Returns list of items with keys: title, snippet, url, source, published_at (ISO when parseable).
-    """
     url = "https://serpapi.com/search"
     params = {
         "q": query,
@@ -206,16 +194,13 @@ def serpapi_search_news(
     if r.status_code != 200:
         raise RuntimeError(f"SerpAPI HTTP {r.status_code}: {r.text}")
     data = r.json()
-
     results = []
-    # Common key in SerpAPI responses
     for entry in data.get("news_results", [])[:num_results]:
         title = entry.get("title") or ""
         snippet = entry.get("snippet") or entry.get("summary") or ""
         link = entry.get("link") or entry.get("source_url") or ""
         source = entry.get("source") or entry.get("news_source") or ""
         published_at = None
-        # SerpAPI sometimes uses 'date' or 'published' or human-friendly strings
         for cand in ("date", "published", "time", "published_at"):
             if entry.get(cand):
                 v = entry.get(cand)
@@ -237,7 +222,6 @@ def serpapi_search_news(
                 "published_at": published_at,
             }
         )
-    # Fallback parsing of other fields if 'news_results' not present
     if not results:
         for key in ("organic_results", "results", "news"):
             if key in data and isinstance(data[key], list):
@@ -247,26 +231,20 @@ def serpapi_search_news(
                     link = entry.get("link", "") or entry.get("url", "")
                     source = entry.get("source", "") or entry.get("site", "")
                     published_at = entry.get("date") or entry.get("published")
-                    results.append(
-                        {"title": title, "snippet": snippet, "url": link, "source": source, "published_at": published_at}
-                    )
+                    results.append({"title": title, "snippet": snippet, "url": link, "source": source, "published_at": published_at})
                 break
     return results
 
 
 # -------------------------
-# MCP Tool
+# MCP Tool - LSE enforcement + UK news focus
 # -------------------------
 @news_server.tool(
     name="get_serp_news_and_signals",
     description="""
-Fetch news via SerpAPI (HTTP) and compute relevance, sentiment, novelty, source credibility and market noise.
-Args:
-    target: str (ticker like 'VOD' or 'VOD.L' or keywords)
-    serp_api_key: str (optional; if omitted uses env SERPAPI_KEY)
-    num_results: int (default 25)
-    interval_hours: int (default 2)
-    lookback_days_for_noise: int (default 7)
+Fetch UK-focused news via SerpAPI for a ticker or free-text sector/keyword,
+compute relevance, sentiment, novelty, credibility and market noise, and return per-article
+raw signal and percentage (0-100). Ticker-like targets are normalized to .L (LSE).
 """,
 )
 async def get_serp_news_and_signals(
@@ -275,7 +253,7 @@ async def get_serp_news_and_signals(
     num_results: int = 25,
     interval_hours: int = 2,
     lookback_days_for_noise: int = 7,
-    country: str = "us",
+    country: str = "uk",
     language: str = "en",
 ) -> str:
     if not target or not target.strip():
@@ -288,10 +266,15 @@ async def get_serp_news_and_signals(
     target_raw = target.strip()
     ticker_candidate = target_raw.upper()
     ticker_for_price = ""
+    # Detect simple ticker-like strings and normalize to .L
     if re.match(r"^[A-Z]{1,5}(\.L)?$", ticker_candidate):
         ticker_for_price = ticker_candidate if ticker_candidate.endswith(".L") else ticker_candidate + ".L"
+    else:
+        # For free-text sector queries we still keep ticker_for_price empty but will do UK news search
+        ticker_for_price = ""
 
-    query = target_raw + " stock" if ticker_for_price else target_raw
+    # Build query - if ticker-like, search "<ticker> stock UK" to bias results to UK coverage
+    query = (target_raw + " stock UK") if ticker_for_price else target_raw
 
     try:
         articles = serpapi_search_news(query=query, serp_api_key=serp_api_key, num_results=num_results, country=country, language=language)
@@ -302,7 +285,7 @@ async def get_serp_news_and_signals(
         return json.dumps({"target": target_raw, "message": "No articles returned from SerpAPI for this target."})
 
     now = datetime.now(timezone.utc)
-    parsed = []
+    parsed_articles = []
     for a in articles:
         published_parsed = None
         p = a.get("published_at")
@@ -313,7 +296,7 @@ async def get_serp_news_and_signals(
                     published_parsed = dt.to_pydatetime()
             except Exception:
                 published_parsed = None
-        parsed.append(
+        parsed_articles.append(
             {
                 "title": a.get("title"),
                 "snippet": a.get("snippet"),
@@ -326,7 +309,7 @@ async def get_serp_news_and_signals(
 
     interval_delta = timedelta(hours=max(1, int(interval_hours)))
     recent_threshold = now - interval_delta
-    general_news = parsed
+    general_news = parsed_articles
     recent_interval_news = [it for it in general_news if it["_published_dt"] and it["_published_dt"] >= recent_threshold]
 
     keywords = [target_raw]
@@ -336,7 +319,9 @@ async def get_serp_news_and_signals(
     novelty_scores = compute_novelty_scores(general_news)
     market_noise = compute_market_noise(ticker_for_price, lookback_days=lookback_days_for_noise)
 
+    # Compute raw signals
     scored = []
+    raw_signals = []
     for idx, art in enumerate(general_news):
         text_combined = " ".join(filter(None, [art.get("title", ""), art.get("snippet", "")]))
         relevance = compute_relevance_score(text_combined, keywords)
@@ -348,7 +333,7 @@ async def get_serp_news_and_signals(
             signal = numerator / float(max(market_noise, 1e-8))
         except Exception:
             signal = 0.0
-
+        raw_signals.append(signal)
         scored.append(
             {
                 "title": art.get("title"),
@@ -360,10 +345,35 @@ async def get_serp_news_and_signals(
                 "sentiment": round(float(sentiment), 4),
                 "novelty": round(float(novelty), 4),
                 "source_credibility": round(float(cred), 4),
-                "signal_strength": float(signal),
+                "signal_strength": float(signal),  # raw
+                "signal_strength_pct": None,  # fill later
             }
         )
 
+    # Normalize raw_signals -> percentages (0..100)
+    signals_arr = np.array(raw_signals, dtype=float)
+    pct_list = []
+    if signals_arr.size == 0:
+        pct_list = []
+    else:
+        mean = float(np.nanmean(signals_arr))
+        std = float(np.nanstd(signals_arr))
+        if std > 0:
+            # z-score then sigmoid to get stable 0..1 values, then *100
+            z = (signals_arr - mean) / std
+            sigmoid = 1.0 / (1.0 + np.exp(-z))
+            pct_list = (sigmoid * 100.0).tolist()
+        else:
+            # fallback: absolute logistic mapping (center at 10, k tuned)
+            k = 0.15
+            center = 10.0
+            pct_list = [(1.0 / (1.0 + math.exp(-k * (s - center)))) * 100.0 for s in signals_arr]
+
+    # Attach percentages back
+    for i, p in enumerate(pct_list):
+        scored[i]["signal_strength_pct"] = round(float(p), 2)
+
+    # recent scored subset
     recent_urls = {it.get("url") for it in recent_interval_news}
     recent_scored = [s for s in scored if (s.get("url") in recent_urls) or (s.get("published_at") in [r.get("published_at") for r in recent_interval_news])]
 
@@ -386,11 +396,12 @@ async def get_serp_news_and_signals(
             "nlp_engine": "nltk_vader" if NLTK_VADER_AVAILABLE else "heuristic",
             "novelty_engine": "tfidf_if_available",
             "num_results_requested": num_results,
+            "uk_news_focus": True,
         },
     }
     return json.dumps(response)
 
 
 if __name__ == "__main__":
-    print("Starting SerpAPI News MCP server...")
+    print("Starting SerpAPI News MCP server (UK-focused, LSE enforcement)...")
     news_server.run(transport="stdio")
