@@ -1,4 +1,14 @@
-# news_mcp.py
+# news_mcp_full.py
+"""
+SerpAPI (HTTP) based news MCP - UK/London focused search (gl=uk, hl=en-GB).
+Enforces LSE normalization for tickers (adds .L). Computes relevance, sentiment, novelty,
+source credibility and market noise (from yfinance). Returns raw signal + percentage (0-100)
+and an overall aggregated analysis (weighted by source credibility and recency).
+
+Drop this file into the directory your MCP launcher points to and run it. Provide SERPAPI_KEY
+via environment variable or pass as `serp_api_key` param when calling the tool.
+"""
+
 import os
 import json
 import re
@@ -36,7 +46,8 @@ news_server = FastMCP(
     instructions="""
 SerpAPI (HTTP) based news MCP - UK/London focused search (gl=uk, hl=en-GB).
 Enforces LSE normalization for tickers (adds .L). Computes relevance, sentiment, novelty,
-source credibility and market noise (from yfinance). Returns raw signal + percentage (0-100).
+source credibility and market noise (from yfinance). Returns raw signal + percentage (0-100)
+and an overall aggregated analysis (weighted by source credibility and recency).
 """,
 )
 
@@ -267,7 +278,7 @@ async def get_serp_news_and_signals(
     ticker_candidate = target_raw.upper()
     ticker_for_price = ""
     # Detect simple ticker-like strings and normalize to .L
-    if re.match(r"^[A-Z]{1,5}(\.L)?$", ticker_candidate):
+    if re.match(r"^[A-Z]{1,5}(\\.L)?$", ticker_candidate):
         ticker_for_price = ticker_candidate if ticker_candidate.endswith(".L") else ticker_candidate + ".L"
     else:
         # For free-text sector queries we still keep ticker_for_price empty but will do UK news search
@@ -377,6 +388,123 @@ async def get_serp_news_and_signals(
     recent_urls = {it.get("url") for it in recent_interval_news}
     recent_scored = [s for s in scored if (s.get("url") in recent_urls) or (s.get("published_at") in [r.get("published_at") for r in recent_interval_news])]
 
+    # ------------------------------
+    # Overall aggregated analysis
+    # ------------------------------
+    # Compute recency weights (age-based) and credibility weights
+    lambda_decay = 0.1  # tune: higher -> faster decay by age
+    now_dt = datetime.now(timezone.utc)
+
+    def age_hours_from_published(published_iso):
+        if not published_iso:
+            return None
+        try:
+            dt = pd.to_datetime(published_iso, utc=True)
+            if pd.isna(dt):
+                return None
+            delta = now_dt - dt.to_pydatetime()
+            return max(0.0, delta.total_seconds() / 3600.0)
+        except Exception:
+            return None
+
+    # Build arrays for aggregation
+    agg_items = []
+    recent_items = []
+    for item in scored:
+        pub = item.get("published_at")
+        age_h = age_hours_from_published(pub)
+        recency_w = math.exp(-lambda_decay * age_h) if age_h is not None else 1.0
+        cred_w = float(item.get("source_credibility") or 0.5)
+        weight = cred_w * recency_w
+        # Collect numeric fields (fall back to defaults when missing)
+        rel = float(item.get("relevance") or 0.0)
+        sent = float(item.get("sentiment") or 0.5)
+        nov = float(item.get("novelty") or 0.5)
+        cred = float(item.get("source_credibility") or 0.5)
+        raw_sig = float(item.get("signal_strength") or 0.0)
+        pct_sig = float(item.get("signal_strength_pct") or 0.0)
+
+        agg_items.append(
+            {
+                "weight": weight,
+                "relevance": rel,
+                "sentiment": sent,
+                "novelty": nov,
+                "credibility": cred,
+                "raw_signal": raw_sig,
+                "pct_signal": pct_sig,
+                "published_at": pub,
+                "age_hours": age_h,
+                "title": item.get("title"),
+                "url": item.get("url"),
+            }
+        )
+
+    # identify recent items by matching recent_interval_news (by url or published_at)
+    recent_set_urls = {it.get("url") for it in recent_interval_news}
+    recent_set_published = {it.get("published_at") for it in recent_interval_news}
+    for it in agg_items:
+        if (it["url"] in recent_set_urls) or (it["published_at"] in recent_set_published):
+            recent_items.append(it)
+
+    def weighted_mean(items, field, weight_field="weight", default=0.0):
+        vals = [float(x.get(field) or 0.0) for x in items]
+        ws = [float(x.get(weight_field) or 0.0) for x in items]
+        if not vals or sum(ws) == 0:
+            return float(default)
+        return float(np.dot(vals, ws) / float(sum(ws)))
+
+    # Overall aggregated metrics (weighted)
+    overall = {
+        "coverage": len(agg_items),
+        "mean_relevance": round(weighted_mean(agg_items, "relevance"), 4),
+        "mean_sentiment": round(weighted_mean(agg_items, "sentiment"), 4),
+        "mean_novelty": round(weighted_mean(agg_items, "novelty"), 4),
+        "mean_source_credibility": round(weighted_mean(agg_items, "credibility"), 4),
+        "overall_signal_raw": round(weighted_mean(agg_items, "raw_signal"), 6),
+        "overall_signal_pct": round(weighted_mean(agg_items, "pct_signal"), 2),
+        "num_recent": len(recent_items),
+    }
+
+    # Recent-interval aggregated metrics (weighted)
+    recent_overall = {
+        "coverage": len(recent_items),
+        "mean_relevance": round(weighted_mean(recent_items, "relevance"), 4),
+        "mean_sentiment": round(weighted_mean(recent_items, "sentiment"), 4),
+        "mean_novelty": round(weighted_mean(recent_items, "novelty"), 4),
+        "mean_source_credibility": round(weighted_mean(recent_items, "credibility"), 4),
+        "overall_signal_raw": round(weighted_mean(recent_items, "raw_signal"), 6),
+        "overall_signal_pct": round(weighted_mean(recent_items, "pct_signal"), 2),
+    }
+
+    # Top N articles that contributed most (by pct)
+    top_n = 3
+    top_articles = sorted(scored, key=lambda x: (x.get("signal_strength_pct") or 0.0), reverse=True)[:top_n]
+    top_articles_simple = [
+        {
+            "title": t.get("title"),
+            "url": t.get("url"),
+            "signal_pct": t.get("signal_strength_pct"),
+            "relevance": t.get("relevance"),
+            "sentiment": t.get("sentiment"),
+            "novelty": t.get("novelty"),
+            "source_credibility": t.get("source_credibility"),
+            "published_at": t.get("published_at"),
+        }
+        for t in top_articles
+    ]
+
+    overall_analysis = {
+        "overall": overall,
+        "recent_interval": recent_overall,
+        "top_articles": top_articles_simple,
+        "weighting": {
+            "credibility_weight": "source_credibility * recency_weight",
+            "recency_lambda_per_hour": lambda_decay,
+            "recency_weight_formula": "exp(-lambda * age_hours)",
+        },
+    }
+
     signals = [s["signal_strength"] for s in scored if s.get("signal_strength") is not None]
     agg = {"mean": 0.0, "median": 0.0, "count": 0}
     if signals:
@@ -391,6 +519,7 @@ async def get_serp_news_and_signals(
         "general_news": scored,
         "recent_interval_news": recent_scored,
         "aggregate_signal": agg,
+        "overall_analysis": overall_analysis,
         "meta": {
             "serpapi_used": True,
             "nlp_engine": "nltk_vader" if NLTK_VADER_AVAILABLE else "heuristic",
@@ -402,6 +531,228 @@ async def get_serp_news_and_signals(
     return json.dumps(response)
 
 
+@news_server.tool(
+    name="get_overview_table",
+    description="""
+Produce a tabular overview for multiple tickers/keywords.
+Params:
+    tickers: str (comma or space separated, e.g. "VOD,HSBA" or "VOD HSBA")
+    serp_api_key: str (optional; falls back to env SERPAPI_KEY)
+    num_results: int (per ticker; default 15)
+    interval_hours: int (for 'recent' window; default 2)
+Returns JSON with keys: rows (list of dicts), table_markdown (string), csv (string)
+""",
+)
+async def get_overview_table(
+    tickers: str,
+    serp_api_key: Optional[str] = None,
+    num_results: int = 15,
+    interval_hours: int = 2,
+    lookback_days_for_noise: int = 7,
+) -> str:
+    """
+    Build an overview table for a list of tickers/keywords by calling get_serp_news_and_signals
+    for each and extracting overall metrics and counts.
+    """
+    # parse tickers input
+    raw = []
+    for p in tickers.replace(",", " ").split():
+        if p:
+            raw.append(p.strip())
+    if not raw:
+        return json.dumps({"error": "No tickers provided"})
+
+    serp_api_key = serp_api_key or os.getenv("SERPAPI_KEY") or ""
+    if not serp_api_key:
+        return json.dumps({"error": "SerpAPI key required (env SERPAPI_KEY or serp_api_key argument)."})
+
+    rows = []
+    # Sentiment thresholds
+    POS_THRESHOLD = 0.55
+    NEG_THRESHOLD = 0.45
+
+    # For each ticker, call the existing tool and extract summary
+    idx = 1
+    for tk in raw:
+        try:
+            # Reuse existing tool - it returns JSON string
+            res_json = await get_serp_news_and_signals(
+                target=tk,
+                serp_api_key=serp_api_key,
+                num_results=num_results,
+                interval_hours=interval_hours,
+                lookback_days_for_noise=lookback_days_for_noise,
+            )
+            # res_json may be a json string (from that tool). Ensure dict:
+            if isinstance(res_json, str):
+                try:
+                    res = json.loads(res_json)
+                except Exception:
+                    # if not decodeable, create error row
+                    res = {"error": "invalid response from scoring tool"}
+            else:
+                res = res_json
+        except Exception as e:
+            res = {"error": f"tool_call_failed: {e}"}
+
+        if res.get("error"):
+            rows.append({
+                "S.No.": idx,
+                "Stock": tk,
+                "Name": tk,
+                "Signal Strength (%)": None,
+                "Positive Sentiments": 0,
+                "Negative Sentiments": 0,
+                "Overall Sentiments": None,
+                "Context/Timing": None,
+                "Content & Source": None,
+                "Market Impact": "ERROR: " + str(res.get("error")),
+            })
+            idx += 1
+            continue
+
+        # Extract overall percentage if available
+        overall_pct = None
+        if res.get("overall_analysis") and res["overall_analysis"].get("overall"):
+            overall_pct = res["overall_analysis"]["overall"].get("overall_signal_pct")
+
+        # If not available, fallback to aggregate_signal mean -> map via logistic fallback
+        if overall_pct is None:
+            agg = res.get("aggregate_signal", {})
+            mean_raw = agg.get("mean", None)
+            if mean_raw is not None:
+                # map mean_raw to percentage via logistic center=10,k=0.15 fallback
+                k = 0.15
+                center = 10.0
+                try:
+                    overall_pct = (1.0 / (1.0 + math.exp(-k * (float(mean_raw) - center)))) * 100.0
+                    overall_pct = round(overall_pct, 2)
+                except Exception:
+                    overall_pct = None
+
+        # Count positive / negative sentiments among returned articles
+        general_news = res.get("general_news") or []
+        pos_count = 0
+        neg_count = 0
+        sentiments = []
+        most_recent_iso = None
+        top_contents = []
+        for art in general_news:
+            sent = art.get("sentiment")
+            if sent is None:
+                # try compute from title snippet if missing
+                try:
+                    combined = " ".join(filter(None, [art.get("title",""), art.get("snippet","")]))
+                    sent = compute_sentiment_score(combined)
+                except Exception:
+                    sent = 0.5
+            sentiments.append(float(sent))
+            if float(sent) >= POS_THRESHOLD:
+                pos_count += 1
+            if float(sent) <= NEG_THRESHOLD:
+                neg_count += 1
+            # track most recent
+            pa = art.get("published_at")
+            if pa:
+                try:
+                    dt = pd.to_datetime(pa, utc=True, errors="coerce")
+                    if not pd.isna(dt):
+                        iso = dt.isoformat()
+                        if (most_recent_iso is None) or (pd.to_datetime(iso) > pd.to_datetime(most_recent_iso)):
+                            most_recent_iso = iso
+                except Exception:
+                    pass
+            # record content & source for top few
+            top_contents.append({
+                "title": art.get("title"),
+                "snippet": art.get("snippet"),
+                "source": art.get("source"),
+                "url": art.get("url"),
+                "pct": art.get("signal_strength_pct"),
+            })
+
+        # Overall sentiment = mean sentiment scaled to -1..+1 or 0..1? User asked Overall Sentiments -> we'll give 0..1 and interpret
+        overall_sentiment = None
+        if sentiments:
+            overall_sentiment = round(float(np.mean(sentiments)), 4)
+
+        # Context/Timing: show most_recent_iso and interval
+        context_timing = f"Recent window: last {interval_hours} hours; Most recent article: {most_recent_iso or 'N/A'}"
+
+        # Content & Source: pick up to 2 top contributing items (by pct)
+        # safe: handle None titles and sources, avoid stray backslashes
+        top_contrib = sorted(top_contents, key=lambda x: (x.get("pct") or 0.0), reverse=True)[:2]
+        content_source_summary = "; ".join(
+            [
+                f"{(t.get('title') or '')[:80]}... ({(t.get('source') or '')})"
+                for t in top_contrib
+            ]
+        ) if top_contrib else "N/A"
+
+        # Market Impact (qualitative): simple thresholds on overall_pct
+        market_impact = "Neutral"
+        try:
+            if overall_pct is None:
+                market_impact = "Unknown"
+            else:
+                p = float(overall_pct)
+                if p >= 80:
+                    market_impact = "High (likely bullish)"
+                elif p >= 65:
+                    market_impact = "Moderate (bullish)"
+                elif p >= 50:
+                    market_impact = "Neutral"
+                elif p >= 35:
+                    market_impact = "Moderate (bearish)"
+                else:
+                    market_impact = "High (likely bearish)"
+        except Exception:
+            market_impact = "Unknown"
+
+        rows.append({
+            "S.No.": idx,
+            "Stock": tk,
+            "Name": tk,
+            "Signal Strength (%)": overall_pct,
+            "Positive Sentiments": pos_count,
+            "Negative Sentiments": neg_count,
+            "Overall Sentiments": overall_sentiment,
+            "Context/Timing": context_timing,
+            "Content & Source": content_source_summary,
+            "Market Impact": market_impact,
+        })
+        idx += 1
+
+    # Build Markdown table
+    headers = ["S.No.", "Stock", "Name", "Signal Strength (%)", "Positive Sentiments", "Negative Sentiments", "Overall Sentiments", "Context/Timing", "Content & Source", "Market Impact"]
+    md_lines = []
+    md_lines.append("| " + " | ".join(headers) + " |")
+    md_lines.append("| " + " | ".join(["---"] * len(headers)) + " |")
+    for r in rows:
+        md_vals = [str(r.get(h, "")) if r.get(h, "") is not None else "" for h in headers]
+        # sanitize pipes in text
+        md_vals = [v.replace("|", "\\|") for v in md_vals]
+        md_lines.append("| " + " | ".join(md_vals) + " |")
+    table_markdown = "\n".join(md_lines)
+
+    # Build CSV
+    import io, csv
+    csv_buf = io.StringIO()
+    writer = csv.DictWriter(csv_buf, fieldnames=headers)
+    writer.writeheader()
+    for r in rows:
+        writer.writerow({h: r.get(h, "") for h in headers})
+    csv_text = csv_buf.getvalue()
+
+    return json.dumps({
+        "rows": rows,
+        "table_markdown": table_markdown,
+        "csv": csv_text,
+        "count": len(rows),
+    })
+
+
+
 if __name__ == "__main__":
-    print("Starting SerpAPI News MCP server (UK-focused, LSE enforcement)...")
+    print("Starting SerpAPI News MCP server (UK-focused, LSE enforcement, overall analysis)...")
     news_server.run(transport="stdio")
