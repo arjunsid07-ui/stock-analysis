@@ -99,8 +99,8 @@ def compute_sentiment_score(text: str) -> float:
         except Exception:
             pass
     text_l = text.lower()
-    pos_words = ["gain", "up", "strong", "beat", "positive", "upgrade", "outperform", "record"]
-    neg_words = ["loss", "drop", "down", "weak", "miss", "negative", "downgrade", "lawsuit"]
+    pos_words = ["gain", "up", "strong", "beat", "positive", "upgrade", "outperform", "record", "optimis", "raise", "upgrade"]
+    neg_words = ["loss", "drop", "down", "weak", "miss", "negative", "downgrade", "lawsuit", "cut", "warn", "fall"]
     score = 0.0
     for w in pos_words:
         if w in text_l:
@@ -182,13 +182,13 @@ def compute_market_noise(ticker: str, lookback_days: int = 7) -> float:
 
 
 # -------------------------
-# SerpAPI (HTTP) helper - UK focused by default (gl=uk, hl=en-GB)
+# SerpAPI (HTTP) helper - UK focused by default (gl=uk, hl=en)
 # -------------------------
 def serpapi_search_news(
     query: str,
     serp_api_key: str,
     num_results: int = 20,
-    language: str = "en-GB",
+    language: str = "en",
     country: str = "uk",
 ) -> List[Dict]:
     url = "https://serpapi.com/search"
@@ -531,6 +531,9 @@ async def get_serp_news_and_signals(
     return json.dumps(response)
 
 
+# -------------------------
+# Overview table tool — merged stock/name and textual sentiment summaries
+# -------------------------
 @news_server.tool(
     name="get_overview_table",
     description="""
@@ -550,10 +553,6 @@ async def get_overview_table(
     interval_hours: int = 2,
     lookback_days_for_noise: int = 7,
 ) -> str:
-    """
-    Build an overview table for a list of tickers/keywords by calling get_serp_news_and_signals
-    for each and extracting overall metrics and counts.
-    """
     # parse tickers input
     raw = []
     for p in tickers.replace(",", " ").split():
@@ -567,15 +566,46 @@ async def get_overview_table(
         return json.dumps({"error": "SerpAPI key required (env SERPAPI_KEY or serp_api_key argument)."})
 
     rows = []
-    # Sentiment thresholds
-    POS_THRESHOLD = 0.55
-    NEG_THRESHOLD = 0.45
 
-    # For each ticker, call the existing tool and extract summary
+    # heuristics/thresholds
+    POS_THRESHOLD = 0.60
+    NEG_THRESHOLD = 0.40
+
+    # context keywords (same as before)
+    CONTEXT_KEYWORDS = {
+        "Earnings Release": ["quarter", "quarterly", "q1", "q2", "q3", "q4", "results", "earnings", "revenue", "profit", "loss"],
+        "CEO Statement": ["ceo", "chief executive", "said", "statement", "commented", "spokesman", "spokesperson"],
+        "M&A": ["acquir", "acquisit", "merger", "buyout", "takeover", "bid for"],
+        "Regulatory / Lawsuit": ["investig", "regulator", "fine", "lawsuit", "probe", "court", "regulatory"],
+        "Guidance": ["guidance", "outlook", "forecast", "raise", "lowered", "cut guidance"],
+        "Dividend": ["dividend", "payout", "special dividend", "dividends"],
+        "Restructuring / Layoff": ["layoff", "redund", "restructur", "job cut", "reorg"],
+        "Product / Contract": ["contract", "deal", "agreement", "order", "supply", "launch", "product"],
+    }
+
+    def detect_context(text: str) -> Optional[str]:
+        if not text:
+            return None
+        txt = text.lower()
+        for ctx, kws in CONTEXT_KEYWORDS.items():
+            for kw in kws:
+                if kw in txt:
+                    return ctx
+        return None
+
+    # helper to safely parse published ISO to pandas.Timestamp (utc)
+    def parse_iso(iso):
+        try:
+            dt = pd.to_datetime(iso, utc=True, errors="coerce")
+            if pd.isna(dt):
+                return None
+            return dt
+        except Exception:
+            return None
+
     idx = 1
     for tk in raw:
         try:
-            # Reuse existing tool - it returns JSON string
             res_json = await get_serp_news_and_signals(
                 target=tk,
                 serp_api_key=serp_api_key,
@@ -583,12 +613,10 @@ async def get_overview_table(
                 interval_hours=interval_hours,
                 lookback_days_for_noise=lookback_days_for_noise,
             )
-            # res_json may be a json string (from that tool). Ensure dict:
             if isinstance(res_json, str):
                 try:
                     res = json.loads(res_json)
                 except Exception:
-                    # if not decodeable, create error row
                     res = {"error": "invalid response from scoring tool"}
             else:
                 res = res_json
@@ -599,143 +627,221 @@ async def get_overview_table(
             rows.append({
                 "S.No.": idx,
                 "Stock": tk,
-                "Name": tk,
                 "Signal Strength (%)": None,
-                "Positive Sentiments": 0,
-                "Negative Sentiments": 0,
-                "Overall Sentiments": None,
-                "Context/Timing": None,
-                "Content & Source": None,
+                "Positive Sentiments": "ERROR: " + str(res.get("error")),
+                "Negative Sentiments": "ERROR",
+                "Overall Sentiments": "Unknown",
+                "Context/Timing": "N/A",
+                "Content & Source": "N/A",
                 "Market Impact": "ERROR: " + str(res.get("error")),
             })
             idx += 1
             continue
 
-        # Extract overall percentage if available
+        # overall pct
         overall_pct = None
         if res.get("overall_analysis") and res["overall_analysis"].get("overall"):
             overall_pct = res["overall_analysis"]["overall"].get("overall_signal_pct")
 
-        # If not available, fallback to aggregate_signal mean -> map via logistic fallback
         if overall_pct is None:
             agg = res.get("aggregate_signal", {})
             mean_raw = agg.get("mean", None)
             if mean_raw is not None:
-                # map mean_raw to percentage via logistic center=10,k=0.15 fallback
-                k = 0.15
-                center = 10.0
+                k = 0.15; center = 10.0
                 try:
                     overall_pct = (1.0 / (1.0 + math.exp(-k * (float(mean_raw) - center)))) * 100.0
                     overall_pct = round(overall_pct, 2)
                 except Exception:
                     overall_pct = None
 
-        # Count positive / negative sentiments among returned articles
         general_news = res.get("general_news") or []
-        pos_count = 0
-        neg_count = 0
-        sentiments = []
-        most_recent_iso = None
-        top_contents = []
+        highlights = []
+        positives = []
+        negatives = []
+        neutrals = []
+        all_sentiments = []
+        most_recent_dt = None
+
+        # collect per-article info with parsed dates
         for art in general_news:
+            title = (art.get("title") or "").strip()
+            snippet = (art.get("snippet") or "").strip()
+            combined = (title + " " + snippet).strip()
             sent = art.get("sentiment")
             if sent is None:
-                # try compute from title snippet if missing
-                try:
-                    combined = " ".join(filter(None, [art.get("title",""), art.get("snippet","")]))
-                    sent = compute_sentiment_score(combined)
-                except Exception:
-                    sent = 0.5
-            sentiments.append(float(sent))
-            if float(sent) >= POS_THRESHOLD:
-                pos_count += 1
-            if float(sent) <= NEG_THRESHOLD:
-                neg_count += 1
-            # track most recent
+                sent = compute_sentiment_score(combined)
+            sent = float(sent)
+            all_sentiments.append(sent)
+
+            # published parsed
             pa = art.get("published_at")
-            if pa:
-                try:
-                    dt = pd.to_datetime(pa, utc=True, errors="coerce")
-                    if not pd.isna(dt):
-                        iso = dt.isoformat()
-                        if (most_recent_iso is None) or (pd.to_datetime(iso) > pd.to_datetime(most_recent_iso)):
-                            most_recent_iso = iso
-                except Exception:
-                    pass
-            # record content & source for top few
-            top_contents.append({
-                "title": art.get("title"),
-                "snippet": art.get("snippet"),
-                "source": art.get("source"),
-                "url": art.get("url"),
-                "pct": art.get("signal_strength_pct"),
-            })
+            dt = parse_iso(pa)
+            if dt is not None:
+                if (most_recent_dt is None) or (dt > most_recent_dt):
+                    most_recent_dt = dt
 
-        # Overall sentiment = mean sentiment scaled to -1..+1 or 0..1? User asked Overall Sentiments -> we'll give 0..1 and interpret
-        overall_sentiment = None
-        if sentiments:
-            overall_sentiment = round(float(np.mean(sentiments)), 4)
+            entry = {
+                "title": title,
+                "snippet": snippet,
+                "source": art.get("source") or "",
+                "url": art.get("url") or "",
+                "pct": art.get("signal_strength_pct") or 0.0,
+                "dt": dt,
+                "sent": sent,
+            }
 
-        # Context/Timing: show most_recent_iso and interval
-        context_timing = f"Recent window: last {interval_hours} hours; Most recent article: {most_recent_iso or 'N/A'}"
-
-        # Content & Source: pick up to 2 top contributing items (by pct)
-        # safe: handle None titles and sources, avoid stray backslashes
-        top_contrib = sorted(top_contents, key=lambda x: (x.get("pct") or 0.0), reverse=True)[:2]
-        content_source_summary = "; ".join(
-            [
-                f"{(t.get('title') or '')[:80]}... ({(t.get('source') or '')})"
-                for t in top_contrib
-            ]
-        ) if top_contrib else "N/A"
-
-        # Market Impact (qualitative): simple thresholds on overall_pct
-        market_impact = "Neutral"
-        try:
-            if overall_pct is None:
-                market_impact = "Unknown"
+            highlights.append(entry)
+            if sent >= POS_THRESHOLD:
+                positives.append(entry)
+            elif sent <= NEG_THRESHOLD:
+                negatives.append(entry)
             else:
-                p = float(overall_pct)
-                if p >= 80:
-                    market_impact = "High (likely bullish)"
-                elif p >= 65:
-                    market_impact = "Moderate (bullish)"
-                elif p >= 50:
-                    market_impact = "Neutral"
-                elif p >= 35:
-                    market_impact = "Moderate (bearish)"
+                neutrals.append(entry)
+
+        # Build textual positive/negative summaries (top 2 each by pct then recent)
+        def build_text_summary(items, topk=2):
+            if not items:
+                return "None"
+            # sort by (pct desc, dt desc)
+            items_sorted = sorted(items, key=lambda x: (float(x.get("pct") or 0.0), x.get("dt") or pd.Timestamp.min), reverse=True)[:topk]
+            parts = []
+            for it in items_sorted:
+                t = (it.get("title") or "")
+                s = (it.get("snippet") or "")
+                src = it.get("source") or ""
+                t_short = (t[:100] + "...") if len(t) > 100 else t
+                s_short = (s[:140] + "...") if len(s) > 140 else s
+                parts.append(f"{t_short} — {s_short} ({src})")
+            return " || ".join(parts)
+
+        positive_summary = build_text_summary(positives, topk=2)
+        negative_summary = build_text_summary(negatives, topk=2)
+
+        # Content & Source: top 3 highlights by (pct desc, dt desc)
+        top_highlights = sorted(highlights, key=lambda x: (float(x.get("pct") or 0.0), x.get("dt") or pd.Timestamp.min), reverse=True)[:3]
+        ch_texts = []
+        for h in top_highlights:
+            t = h.get("title") or ""
+            s = h.get("snippet") or ""
+            src = h.get("source") or ""
+            t_short = (t[:120] + "...") if len(t) > 120 else t
+            s_short = (s[:160] + "...") if len(s) > 160 else s
+            ch_texts.append(f"{t_short} — {s_short} ({src})")
+        content_source_summary = " || ".join(ch_texts) if ch_texts else "N/A"
+
+        # Context/Timing: pick the most recent article that matches any context keyword
+        context_candidate = None
+        context_candidate_dt = None
+        for h in highlights:
+            txt = (h.get("title") or "") + " " + (h.get("snippet") or "")
+            ctx = detect_context(txt)
+            if ctx:
+                dt = h.get("dt")
+                # prefer later dt; if dt missing, keep but lower priority
+                if dt is not None:
+                    if (context_candidate_dt is None) or (dt > context_candidate_dt):
+                        context_candidate = ctx
+                        context_candidate_dt = dt
                 else:
-                    market_impact = "High (likely bearish)"
+                    # if we don't have any candidate yet, set it
+                    if context_candidate is None:
+                        context_candidate = ctx
+
+        primary_context = context_candidate or "General News"
+        most_recent_iso = most_recent_dt.isoformat() if most_recent_dt is not None else "N/A"
+
+        # Overall sentiment label (bullish/bearish/neutral)
+        overall_label = "Neutral"
+        try:
+            if overall_pct is not None:
+                p = float(overall_pct)
+                if p >= 62:
+                    overall_label = "Bullish"
+                elif p <= 38:
+                    overall_label = "Bearish"
+                else:
+                    overall_label = "Neutral"
+            else:
+                if all_sentiments:
+                    m = float(np.mean(all_sentiments))
+                    if m >= 0.62:
+                        overall_label = "Bullish"
+                    elif m <= 0.38:
+                        overall_label = "Bearish"
+                    else:
+                        overall_label = "Neutral"
         except Exception:
-            market_impact = "Unknown"
+            overall_label = "Neutral"
+
+        # Market impact (same thresholds)
+        market_impact = "Unknown" if overall_pct is None else (
+            "High (likely bullish)" if overall_pct >= 80 else
+            "Moderate (bullish)" if overall_pct >= 65 else
+            "Neutral" if overall_pct >= 50 else
+            "Moderate (bearish)" if overall_pct >= 35 else
+            "High (likely bearish)"
+        )
+
+        # Display name resolve
+        display_name = tk
+        try:
+            cand = tk.upper()
+            tf = cand if cand.endswith(".L") else cand + ".L"
+            info = yf.Ticker(tf).info
+            longname = info.get("longName") or info.get("shortName") or None
+            if longname:
+                display_name = f"{tk} — {longname}"
+        except Exception:
+            pass
+
+        # Add number of articles and avg novelty (if available) into a small note appended to Context/Timing
+        num_articles = len(highlights)
+        avg_novelty = None
+        try:
+            # compute avg novelty if general_news items contain novelty; fallback compute using titles presence
+            novs = []
+            for art in (res.get("general_news") or []):
+                nval = art.get("novelty")
+                if nval is not None:
+                    novs.append(float(nval))
+            if novs:
+                avg_novelty = round(float(np.mean(novs)), 4)
+        except Exception:
+            avg_novelty = None
+
+        context_timing_field = f"{primary_context}; Most recent: {most_recent_iso}; Articles: {num_articles}"
+        if avg_novelty is not None:
+            context_timing_field += f"; AvgNovelty: {avg_novelty}"
 
         rows.append({
             "S.No.": idx,
-            "Stock": tk,
-            "Name": tk,
+            "Stock": display_name,
             "Signal Strength (%)": overall_pct,
-            "Positive Sentiments": pos_count,
-            "Negative Sentiments": neg_count,
-            "Overall Sentiments": overall_sentiment,
-            "Context/Timing": context_timing,
+            "Positive Sentiments": positive_summary,
+            "Negative Sentiments": negative_summary,
+            "Overall Sentiments": overall_label,
+            "Context/Timing": context_timing_field,
             "Content & Source": content_source_summary,
             "Market Impact": market_impact,
         })
         idx += 1
 
-    # Build Markdown table
-    headers = ["S.No.", "Stock", "Name", "Signal Strength (%)", "Positive Sentiments", "Negative Sentiments", "Overall Sentiments", "Context/Timing", "Content & Source", "Market Impact"]
+    # Build Markdown and CSV (same truncation as before)
+    headers = ["S.No.", "Stock", "Signal Strength (%)", "Positive Sentiments", "Negative Sentiments", "Overall Sentiments", "Context/Timing", "Content & Source", "Market Impact"]
     md_lines = []
     md_lines.append("| " + " | ".join(headers) + " |")
     md_lines.append("| " + " | ".join(["---"] * len(headers)) + " |")
     for r in rows:
-        md_vals = [str(r.get(h, "")) if r.get(h, "") is not None else "" for h in headers]
-        # sanitize pipes in text
+        def trunc(s, n=120):
+            if s is None:
+                return ""
+            s = str(s)
+            return (s[:n] + "...") if len(s) > n else s
+        md_vals = [trunc(r.get(h, "")) for h in headers]
         md_vals = [v.replace("|", "\\|") for v in md_vals]
         md_lines.append("| " + " | ".join(md_vals) + " |")
     table_markdown = "\n".join(md_lines)
 
-    # Build CSV
     import io, csv
     csv_buf = io.StringIO()
     writer = csv.DictWriter(csv_buf, fieldnames=headers)
@@ -750,7 +856,6 @@ async def get_overview_table(
         "csv": csv_text,
         "count": len(rows),
     })
-
 
 
 if __name__ == "__main__":
