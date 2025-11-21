@@ -1,0 +1,47 @@
+{
+    "mcpServers": {
+        "news-server": {
+            "command": "/Users/path/to/.local/bin/uv",
+            "args": [
+                "--directory",
+                "/Users/path/to/stock-agent/yahoo-finance-mcp/mcp",
+                "run",
+                "python",
+                "news_mcp.py"
+            ],
+            "env": {
+                "SERPAPI_KEY": "SERP_API_KEY"
+            }
+        },
+        "pead-server": {
+            "command": "/Users/path/to/.local/bin/uv",
+            "args": [
+                "--directory",
+                "/Users/path/to/stock-agent/yahoo-finance-mcp/mcp",
+                "run",
+                "python",
+                "pead_mcp.py"
+            ]
+        },
+        "technical-analysis-server": {
+            "command": "/Users/path/to/.local/bin/uv",
+            "args": [
+                "--directory",
+                "/Users/path/to/stock-agent/yahoo-finance-mcp/mcp",
+                "run",
+                "python",
+                "technical_analysis_mcp.py"
+            ]
+        },
+        "fundamental-analysis-server": {
+            "command": "/Users/path/to/.local/bin/uv",
+            "args": [
+                "--directory",
+                "/Users/path/to/stock-agent/yahoo-finance-mcp/mcp",
+                "run",
+                "python",
+                "fundamental_analysis_mcp.py"
+            ]
+        }
+    }
+}
