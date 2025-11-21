@@ -431,20 +431,6 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         if np_yoy is None:
             np_yoy = np_qoq
 
-        opinc_qoq = pct(opinc_curr, opinc_prev)
-        opinc_yoy = None
-        try:
-            for key in OPINC_KEYS:
-                if isinstance(fin_y, pd.DataFrame) and key in fin_y.index:
-                    vals = [v for v in fin_y.loc[key].dropna().tolist()]
-                    if len(vals) >= 2:
-                        opinc_yoy = pct(vals[0], vals[1])
-                        break
-        except Exception:
-            opinc_yoy = None
-        if opinc_yoy is None:
-            opinc_yoy = opinc_qoq
-
         # CE/Profit
         ce_profit_ratio = None
         try:
@@ -491,8 +477,6 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         sales_yoy = r2(sales_yoy)
         np_qoq = r2(np_qoq)
         np_yoy = r2(np_yoy)
-        opinc_qoq = r2(opinc_qoq)
-        opinc_yoy = r2(opinc_yoy)
         forward_pe = r4(forward_pe)
         ce_profit_ratio = r4(ce_profit_ratio)
 
@@ -502,12 +486,10 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         mapped_sales_qoq = map_pct_change_to_0_100(sales_qoq) if sales_qoq is not None else None
         mapped_np_yoy = map_pct_change_to_0_100(np_yoy) if np_yoy is not None else None
         mapped_np_qoq = map_pct_change_to_0_100(np_qoq) if np_qoq is not None else None
-        mapped_opinc_yoy = map_pct_change_to_0_100(opinc_yoy) if opinc_yoy is not None else None
-        mapped_opinc_qoq = map_pct_change_to_0_100(opinc_qoq) if opinc_qoq is not None else None
         mapped_ce_profit = map_ce_profit_to_0_100(ce_profit_ratio) if ce_profit_ratio is not None else None
 
         mapped_list = []
-        for m in [mapped_forward_pe, mapped_sales_yoy, mapped_sales_qoq, mapped_np_yoy, mapped_np_qoq, mapped_opinc_yoy, mapped_opinc_qoq, mapped_ce_profit]:
+        for m in [mapped_forward_pe, mapped_sales_yoy, mapped_sales_qoq, mapped_np_yoy, mapped_np_qoq, mapped_ce_profit]:
             if m is not None:
                 mapped_list.append(float(m))
 
@@ -528,14 +510,12 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
             "Sales QoQ": sales_qoq,
             "NP YoY": np_yoy,
             "NP QoQ": np_qoq,
-            "OpInc YoY": opinc_yoy,
-            "OpInc QoQ": opinc_qoq,
             "CE/Profit": ce_profit_ratio,
         })
         idx += 1
 
     # build markdown and csv
-    headers = ["S.No.", "Stock Name", "PEAD Score", "Result Date", "Forward PE", "Sales YoY", "Sales QoQ", "NP YoY", "NP QoQ", "OpInc YoY", "OpInc QoQ", "CE/Profit"]
+    headers = ["S.No.", "Stock Name", "PEAD Score", "Result Date", "Forward PE", "Sales YoY", "Sales QoQ", "NP YoY", "NP QoQ", "CE/Profit"]
     md_lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
     def trunc(x, n=120):
         if x is None:
