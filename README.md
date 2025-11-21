@@ -1,166 +1,156 @@
-[![MseeP.ai Security Assessment Badge](https://mseep.net/pr/alex2yang97-yahoo-finance-mcp-badge.png)](https://mseep.ai/app/alex2yang97-yahoo-finance-mcp)
+### Stock analysis mcps
 
-# Yahoo Finance MCP Server
+- Use this prompt in claude to run these MCP servers as stock recommender:
+----------
+You are a stock-analysis supervisor agent that uses 4 MCP tools to analyze stocks and generate 6 structured tables.
 
-<div align="right">
-  <a href="README.md">English</a> | <a href="README.zh.md">中文</a>
-</div>
+Your job:
 
-This is a Model Context Protocol (MCP) server that provides comprehensive financial data from Yahoo Finance. It allows you to retrieve detailed information about stocks, including historical prices, company information, financial statements, options data, and market news.
+When the user provides:
 
-[![smithery badge](https://smithery.ai/badge/@Alex2Yang97/yahoo-finance-mcp)](https://smithery.ai/server/@Alex2Yang97/yahoo-finance-mcp)
+Stock tickers
 
-## Demo
+Current holding quantities
 
-![MCP Demo](assets/demo.gif)
+Average buy price
 
-## MCP Tools
+Time period (optional)
 
-The server exposes the following tools through the Model Context Protocol:
+You must:
 
-### Stock Information
+Call all 4 MCPs:
 
-| Tool | Description |
-|------|-------------|
-| `get_historical_stock_prices` | Get historical OHLCV data for a stock with customizable period and interval |
-| `get_stock_info` | Get comprehensive stock data including price, metrics, and company details |
-| `get_yahoo_finance_news` | Get latest news articles for a stock |
-| `get_stock_actions` | Get stock dividends and splits history |
+PEAD MCP
 
-### Financial Statements
+Technical Analysis MCP
 
-| Tool | Description |
-|------|-------------|
-| `get_financial_statement` | Get income statement, balance sheet, or cash flow statement (annual/quarterly) |
-| `get_holder_info` | Get major holders, institutional holders, mutual funds, or insider transactions |
+Fundamental MCP
 
-### Options Data
+News Sentiment MCP
 
-| Tool | Description |
-|------|-------------|
-| `get_option_expiration_dates` | Get available options expiration dates |
-| `get_option_chain` | Get options chain for a specific expiration date and type (calls/puts) |
+Generate 4 raw tables exactly as returned by tools.
 
-### Analyst Information
+Generate 2 more tables derived from these results:
 
-| Tool | Description |
-|------|-------------|
-| `get_recommendations` | Get analyst recommendations or upgrades/downgrades history |
+Table 5 — Conclusion Based on Public Data and Analysis
 
-## Real-World Use Cases
+For each stock:
 
-With this MCP server, you can use Claude to:
+Give a Final Call: Buy / Sell / Hold
 
-### Stock Analysis
+Provide a detailed reasoning using:
 
-- **Price Analysis**: "Show me the historical stock prices for AAPL over the last 6 months with daily intervals."
-- **Financial Health**: "Get the quarterly balance sheet for Microsoft."
-- **Performance Metrics**: "What are the key financial metrics for Tesla from the stock info?"
-- **Trend Analysis**: "Compare the quarterly income statements of Amazon and Google."
-- **Cash Flow Analysis**: "Show me the annual cash flow statement for NVIDIA."
+Fundamental strength
 
-### Market Research
+Valuation
 
-- **News Analysis**: "Get the latest news articles about Meta Platforms."
-- **Institutional Activity**: "Show me the institutional holders of Apple stock."
-- **Insider Trading**: "What are the recent insider transactions for Tesla?"
-- **Options Analysis**: "Get the options chain for SPY with expiration date 2024-06-21 for calls."
-- **Analyst Coverage**: "What are the analyst recommendations for Amazon over the last 3 months?"
+Momentum / technical indicators
 
-### Investment Research
+News & sentiment
 
-- "Create a comprehensive analysis of Microsoft's financial health using their latest quarterly financial statements."
-- "Compare the dividend history and stock splits of Coca-Cola and PepsiCo."
-- "Analyze the institutional ownership changes in Tesla over the past year."
-- "Generate a report on the options market activity for Apple stock with expiration in 30 days."
-- "Summarize the latest analyst upgrades and downgrades in the tech sector over the last 6 months."
+Catalysts
 
-## Requirements
+Macro or sector conditions
 
-- Python 3.11 or higher
-- Dependencies as listed in `pyproject.toml`, including:
-  - mcp
-  - yfinance
-  - pandas
-  - pydantic
-  - and other packages for data processing
+Use explanations such as:
 
-## Setup
+“Strong fundamentals + Reasonable valuation + Positive catalysts + Strong sentiment”
 
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/Alex2Yang97/yahoo-finance-mcp.git
-   cd yahoo-finance-mcp
-   ```
+“Weak fundamentals + Negative catalysts + Bearish sentiment”
 
-2. Create and activate a virtual environment and install dependencies:
-   ```bash
-   uv venv
-   source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-   uv pip install -e .
-   ```
+Table 6 — Conclusion Based on Company Strategy & Policy
 
-## Usage
+Use user-provided holdings and average price.
 
-### Development Mode
+For each stock:
 
-You can test the server with MCP Inspector by running:
+Show Current Holding (# units user owns)
 
-```bash
-uv run server.py
-```
+Show Average Price (user's average buy price)
 
-This will start the server and allow you to test the available tools.
+Provide a strategic recommendation based on company internal policy:
 
-### Integration with Claude for Desktop
+Buy → e.g., “Buy 10% more of total holding.”
 
-To integrate this server with Claude for Desktop:
+Hold → e.g., “Hold for next 6 months.”
 
-1. Install Claude for Desktop to your local machine.
-2. Install VS Code to your local machine. Then run the following command to open the `claude_desktop_config.json` file:
-   - MacOS: `code ~/Library/Application\ Support/Claude/claude_desktop_config.json`
-   - Windows: `code $env:AppData\Claude\claude_desktop_config.json`
+Sell → e.g., “Sell 10% every month until holding reaches 50%.”
 
-3. Edit the Claude for Desktop config file, located at:
-   - macOS: 
-     ```json
-     {
-       "mcpServers": {
-         "yfinance": {
-           "command": "uv",
-           "args": [
-             "--directory",
-             "/ABSOLUTE/PATH/TO/PARENT/FOLDER/yahoo-finance-mcp",
-             "run",
-             "server.py"
-           ]
-         }
-       }
-     }
-     ```
-   - Windows:
-     ```json
-     {
-       "mcpServers": {
-         "yfinance": {
-           "command": "uv",
-           "args": [
-             "--directory",
-             "C:\\ABSOLUTE\\PATH\\TO\\PARENT\\FOLDER\\yahoo-finance-mcp",
-             "run",
-             "server.py"
-           ]
-         }
-       }
-     }
-     ```
+Formatting Rules
 
-   - **Note**: You may need to put the full path to the uv executable in the command field. You can get this by running `which uv` on MacOS/Linux or `where uv` on Windows.
+Always output six tables in order.
 
-4. Restart Claude for Desktop
+Tables must be clean, structured, and consistent.
 
-## License
+Use user portfolio data accurately.
 
-MIT
+If a tool fails, retry or state the error clearly.
 
+Final Objective
 
+Deliver a complete investment recommendation package using a combination of:
+
+PEAD
+
+Technical indicators
+
+Fundamental strength
+
+Sentiment/news
+
+User portfolio position
+
+Internal company strategy
+
+Your answers must be actionable, data-driven, and clear.
+
+-------
+- Claude config
+```json
+{
+  "mcpServers": {
+    "news-server": {
+      "command": "/Users/path/to/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/path/to/stock-agent/yahoo-finance-mcp/mcp",
+        "run",
+        "python",
+        "news_mcp.py"
+      ],
+      "env": {
+        "SERPAPI_KEY": "SERP_API_KEY"
+      }
+    },
+    "pead-server": {
+      "command": "/Users/path/to/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/path/to/stock-agent/yahoo-finance-mcp/mcp",
+        "run",
+        "python",
+        "pead_mcp.py"
+      ]
+    },
+    "technical-analysis-server": {
+      "command": "/Users/path/to/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/path/to/stock-agent/yahoo-finance-mcp/mcp",
+        "run",
+        "python",
+        "technical_analysis_mcp.py"
+      ]
+    },
+    "fundamental-analysis-server": {
+      "command": "/Users/path/to/.local/bin/uv",
+      "args": [
+        "--directory",
+        "/Users/path/to/stock-agent/yahoo-finance-mcp/mcp",
+        "run",
+        "python",
+        "fundamental_analysis_mcp.py"
+      ]
+    }
+  }
+}
