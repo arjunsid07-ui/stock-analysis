@@ -1,21 +1,13 @@
 # pead_mcp.py
 """
-Yahoo Finance PEAD MCP - Net Income Before Taxes used as 'Sales'
+Yahoo Finance PEAD MCP - Bank-aware (Operating Income) & robust result-date
 
-This MCP computes a PEAD score as the average of normalized metrics (all mapped to 0..100):
- - Forward PE (lower is better)
- - Sales YoY (we use Net Income Before Taxes as 'Sales' for bank-like tickers)
- - Sales QoQ
- - NP YoY (Net Profit YoY)
- - NP QoQ
- - EBIDT YoY
- - EBIDT QoQ
- - CE/Profit (Cash & Equivalents / Net Income, lower is better)
-
-Behavior changes from previous version:
- - "Sales" now prefers 'Net Income Before Taxes' (user request). Fallback sequence still available.
- - improved label matching and computation of EBITDA when not directly present.
- - forward PE computed as price / forwardEPS when necessary.
+Changes in this version:
+- "Sales" uses Net Income Before Taxes (as you requested) with fallbacks.
+- EBITDA columns replaced by Operating Income YoY & QoQ (banks prefer OpIncome).
+- Robust earnings/result-date extraction (multiple fallbacks; returns MOST RECENT date within `days`).
+- Forward PE computed from price/forwardEps when needed.
+- Clear rounding and 0..100 normalization for all components; PEAD is average of 8 metrics.
 
 Drop into your MCP folder and run; requires `yfinance`, `pandas`, `numpy`.
 """
@@ -35,7 +27,7 @@ from mcp.server.fastmcp import FastMCP
 
 pead_server = FastMCP(
     "yfinance_pead",
-    instructions="Yahoo Finance PEAD MCP: robust fundamentals + PEAD score for LSE tickers (Sales = Net Income Before Taxes).",
+    instructions="Yahoo Finance PEAD MCP: bank-aware PEAD (OpInc) + robust date handling.",
 )
 
 # ---------- helpers ----------
@@ -88,13 +80,12 @@ def try_get_series_pct_change(curr, prev):
         return None
 
 
-# UPDATED key lists: Sales now prefers Net Income Before Taxes per user request
+# Key lists
 SALES_KEYS = [
     "Net Income Before Taxes",
     "Profit before tax",
     "Profit Before Tax",
     "Pretax Income",
-    # fallback generic revenue fields
     "Total Revenue",
     "Revenue",
     "Net Sales",
@@ -106,15 +97,16 @@ NP_KEYS = [
     "NetIncome",
     "Net Income Attributable To Parent",
     "Profit (Loss)",
-    "Net (loss) income",
 ]
-EBIDT_KEYS = ["EBITDA", "Ebitda", "EBIT", "Operating Income", "Operating income"]
+OPINC_KEYS = ["Operating Income", "Operating income", "EBIT", "OperatingIncome"]
 CAPEX_KEYS = ["Capital Expenditure", "Capital Expenditures", "Capex", "Purchase of property, plant and equipment"]
+DA_KEYS = ["Depreciation", "Depreciation & Amortization", "Depreciation and amortisation", "Depreciation & amortisation"]
 
 
 def find_latest_pair(df: pd.DataFrame, keys: List[str]):
     if not isinstance(df, pd.DataFrame) or df.empty:
         return None, None
+    # exact
     for key in keys:
         if key in df.index:
             try:
@@ -125,6 +117,7 @@ def find_latest_pair(df: pd.DataFrame, keys: List[str]):
                     return float(series.iloc[0]), None
             except Exception:
                 continue
+    # fuzzy
     for idx in df.index:
         try:
             lab = str(idx).lower()
@@ -140,18 +133,40 @@ def find_latest_pair(df: pd.DataFrame, keys: List[str]):
     return None, None
 
 
-# compute EBITDA if missing using Operating Income + Depreciation + Amortization when possible
+def find_single_latest(df: pd.DataFrame, keys: List[str]):
+    """Return single latest value for any matching key."""
+    if not isinstance(df, pd.DataFrame) or df.empty:
+        return None
+    for key in keys:
+        if key in df.index:
+            try:
+                series = df.loc[key].dropna()
+                if len(series) >= 1:
+                    return float(series.iloc[0])
+            except Exception:
+                continue
+    for idx in df.index:
+        try:
+            lab = str(idx).lower()
+            for k in keys:
+                if k.lower() in lab:
+                    series = df.loc[idx].dropna()
+                    if len(series) >= 1:
+                        return float(series.iloc[0])
+        except Exception:
+            continue
+    return None
+
+
 def compute_ebitda_from_components(t: yf.Ticker):
+    # not primary for banks; best-effort
     try:
         fin_q = t.quarterly_financials if hasattr(t, "quarterly_financials") else pd.DataFrame()
         fin_y = t.financials if hasattr(t, "financials") else pd.DataFrame()
     except Exception:
         return None, None
 
-    # look for depreciation & amortization labels
-    da_keys = ["Depreciation", "Depreciation & Amortization", "Depreciation and amortisation", "Depreciation & amortization"]
-
-    def find_latest(df, keys):
+    def find_one(df, keys):
         if not isinstance(df, pd.DataFrame) or df.empty:
             return None
         for k in keys:
@@ -168,25 +183,111 @@ def compute_ebitda_from_components(t: yf.Ticker):
                         return float(s.iloc[0])
         return None
 
-    # Attempt quarterly then yearly
-    op_income_q, _ = find_latest_pair(t.quarterly_financials if hasattr(t, "quarterly_financials") else pd.DataFrame(), ["Operating Income", "Operating income", "EBIT"]) if hasattr(t, "quarterly_financials") else (None, None)
-    dep_q = find_latest(t.quarterly_financials if hasattr(t, "quarterly_financials") else pd.DataFrame(), da_keys)
+    op_q = find_one(fin_q, OPINC_KEYS)
+    dep_q = find_one(fin_q, DA_KEYS)
     ebitda_q = None
-    if op_income_q is not None and dep_q is not None:
-        ebitda_q = op_income_q + dep_q
+    if op_q is not None and dep_q is not None:
+        ebitda_q = op_q + dep_q
 
-    op_income_y, _ = find_latest_pair(t.financials if hasattr(t, "financials") else pd.DataFrame(), ["Operating Income", "Operating income", "EBIT"]) if hasattr(t, "financials") else (None, None)
-    dep_y = find_latest(t.financials if hasattr(t, "financials") else pd.DataFrame(), da_keys)
+    op_y = find_one(fin_y, OPINC_KEYS)
+    dep_y = find_one(fin_y, DA_KEYS)
     ebitda_y = None
-    if op_income_y is not None and dep_y is not None:
-        ebitda_y = op_income_y + dep_y
+    if op_y is not None and dep_y is not None:
+        ebitda_y = op_y + dep_y
 
     return ebitda_q, ebitda_y
 
 
+def extract_most_recent_earnings_date(t: yf.Ticker, days: int = 15) -> Optional[str]:
+    now = datetime.now(timezone.utc)
+    candidates = []
+    # 1) t.get_earnings_dates (newer yfinance)
+    try:
+        if hasattr(t, "get_earnings_dates"):
+            ed = t.get_earnings_dates(limit=8)
+            if isinstance(ed, pd.DataFrame) and not ed.empty:
+                for _, row in ed.iterrows():
+                    for col in ("Earnings Date", "date", "startdatetime", "startDate"):
+                        if col in row and pd.notna(row[col]):
+                            try:
+                                dt = pd.to_datetime(row[col], utc=True, errors="coerce")
+                                if not pd.isna(dt):
+                                    candidates.append(dt.to_pydatetime())
+                                    break
+                            except Exception:
+                                continue
+    except Exception:
+        pass
+    # 2) t.calendar
+    try:
+        cal = getattr(t, "calendar", None)
+        if isinstance(cal, pd.DataFrame) and not cal.empty:
+            for idx in cal.index:
+                if "Earnings" in str(idx) or "earnings" in str(idx).lower():
+                    try:
+                        val = cal.loc[idx].values[0]
+                        dt = pd.to_datetime(val, utc=True, errors="coerce")
+                        if not pd.isna(dt):
+                            candidates.append(dt.to_pydatetime())
+                    except Exception:
+                        pass
+    except Exception:
+        pass
+    # 3) t.earnings_dates
+    try:
+        ed2 = getattr(t, "earnings_dates", None)
+        if isinstance(ed2, pd.DataFrame) and not ed2.empty:
+            for _, row in ed2.iterrows():
+                for col in ed2.columns:
+                    try:
+                        dt = pd.to_datetime(row[col], utc=True, errors="coerce")
+                        if not pd.isna(dt):
+                            candidates.append(dt.to_pydatetime())
+                            break
+                    except Exception:
+                        continue
+    except Exception:
+        pass
+    # 4) last column of quarterly_financials / financials
+    try:
+        qf = getattr(t, "quarterly_financials", None)
+        fy = getattr(t, "financials", None)
+        for df in (qf, fy):
+            try:
+                if isinstance(df, pd.DataFrame) and not df.empty:
+                    col0 = list(df.columns)[0]
+                    dt0 = pd.to_datetime(col0, utc=True, errors="coerce")
+                    if not pd.isna(dt0):
+                        candidates.append(dt0.to_pydatetime())
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+    # choose most recent candidate within days window (prefer newest)
+    filtered = []
+    for c in candidates:
+        try:
+            if (now - c).days <= days:
+                filtered.append(c)
+        except Exception:
+            continue
+    if not filtered and candidates:
+        # if nothing within window, still return the most recent candidate
+        filtered = candidates
+    if not filtered:
+        return None
+    best = max(filtered)
+    try:
+        return best.isoformat()
+    except Exception:
+        return str(best)
+
+
+# ---------- main tool ----------
 @pead_server.tool(
     name="get_pead_table",
-    description="Compute PEAD table for LSE tickers. Parameters: tickers, days (lookback).",
+    description="Compute PEAD table for LSE tickers. Params: tickers, days (lookback).",
 )
 async def get_pead_table(tickers: str, days: int = 15) -> str:
     if not tickers or not tickers.strip():
@@ -214,8 +315,8 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
                 "Sales QoQ": None,
                 "NP YoY": None,
                 "NP QoQ": None,
-                "EBIDT YoY": None,
-                "EBIDT QoQ": None,
+                "OpInc YoY": None,
+                "OpInc QoQ": None,
                 "CE/Profit": None,
                 "error": f"yfinance error: {e}",
             })
@@ -264,7 +365,7 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         except Exception:
             bal = pd.DataFrame()
 
-        # sales (Net Income Before Taxes preferred)
+        # Sales (Net Income Before Taxes preferred)
         sales_curr, sales_prev = find_latest_pair(fin_q, SALES_KEYS)
         if sales_curr is None:
             sales_curr, sales_prev = find_latest_pair(fin_y, SALES_KEYS)
@@ -274,21 +375,17 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         if np_curr is None:
             np_curr, np_prev = find_latest_pair(fin_y, NP_KEYS)
 
-        # EBITDA
-        ebidt_curr, ebidt_prev = find_latest_pair(fin_q, EBIDT_KEYS)
-        if ebidt_curr is None:
-            ebidt_curr, ebidt_prev = find_latest_pair(fin_y, EBIDT_KEYS)
+        # Operating Income (replace EBITDA)
+        opinc_curr, opinc_prev = find_latest_pair(fin_q, OPINC_KEYS)
+        if opinc_curr is None:
+            opinc_curr, opinc_prev = find_latest_pair(fin_y, OPINC_KEYS)
 
-        # if EBITDA missing, attempt compute
-        if (ebidt_curr is None or ebidt_prev is None):
-            try:
-                e_q, e_y = compute_ebitda_from_components(t)
-                if ebidt_curr is None:
-                    ebidt_curr = e_q
-                if ebidt_prev is None:
-                    ebidt_prev = e_y
-            except Exception:
-                pass
+        # try to compute ebitda as fallback (not primary for banks)
+        e_q, e_y = compute_ebitda_from_components(t)
+        if opinc_curr is None and e_q is not None:
+            opinc_curr = e_q
+        if opinc_prev is None and e_y is not None:
+            opinc_prev = e_y
 
         # capex for CE/Profit
         capex_curr, capex_prev = find_latest_pair(cf, CAPEX_KEYS)
@@ -334,19 +431,19 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         if np_yoy is None:
             np_yoy = np_qoq
 
-        ebidt_qoq = pct(ebidt_curr, ebidt_prev)
-        ebidt_yoy = None
+        opinc_qoq = pct(opinc_curr, opinc_prev)
+        opinc_yoy = None
         try:
-            for key in EBIDT_KEYS:
+            for key in OPINC_KEYS:
                 if isinstance(fin_y, pd.DataFrame) and key in fin_y.index:
                     vals = [v for v in fin_y.loc[key].dropna().tolist()]
                     if len(vals) >= 2:
-                        ebidt_yoy = pct(vals[0], vals[1])
+                        opinc_yoy = pct(vals[0], vals[1])
                         break
         except Exception:
-            ebidt_yoy = None
-        if ebidt_yoy is None:
-            ebidt_yoy = ebidt_qoq
+            opinc_yoy = None
+        if opinc_yoy is None:
+            opinc_yoy = opinc_qoq
 
         # CE/Profit
         ce_profit_ratio = None
@@ -394,8 +491,8 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         sales_yoy = r2(sales_yoy)
         np_qoq = r2(np_qoq)
         np_yoy = r2(np_yoy)
-        ebidt_qoq = r2(ebidt_qoq)
-        ebidt_yoy = r2(ebidt_yoy)
+        opinc_qoq = r2(opinc_qoq)
+        opinc_yoy = r2(opinc_yoy)
         forward_pe = r4(forward_pe)
         ce_profit_ratio = r4(ce_profit_ratio)
 
@@ -405,12 +502,12 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         mapped_sales_qoq = map_pct_change_to_0_100(sales_qoq) if sales_qoq is not None else None
         mapped_np_yoy = map_pct_change_to_0_100(np_yoy) if np_yoy is not None else None
         mapped_np_qoq = map_pct_change_to_0_100(np_qoq) if np_qoq is not None else None
-        mapped_ebidt_yoy = map_pct_change_to_0_100(ebidt_yoy) if ebidt_yoy is not None else None
-        mapped_ebidt_qoq = map_pct_change_to_0_100(ebidt_qoq) if ebidt_qoq is not None else None
+        mapped_opinc_yoy = map_pct_change_to_0_100(opinc_yoy) if opinc_yoy is not None else None
+        mapped_opinc_qoq = map_pct_change_to_0_100(opinc_qoq) if opinc_qoq is not None else None
         mapped_ce_profit = map_ce_profit_to_0_100(ce_profit_ratio) if ce_profit_ratio is not None else None
 
         mapped_list = []
-        for m in [mapped_forward_pe, mapped_sales_yoy, mapped_sales_qoq, mapped_np_yoy, mapped_np_qoq, mapped_ebidt_yoy, mapped_ebidt_qoq, mapped_ce_profit]:
+        for m in [mapped_forward_pe, mapped_sales_yoy, mapped_sales_qoq, mapped_np_yoy, mapped_np_qoq, mapped_opinc_yoy, mapped_opinc_qoq, mapped_ce_profit]:
             if m is not None:
                 mapped_list.append(float(m))
 
@@ -418,40 +515,8 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
         if mapped_list:
             pead_score = round(float(sum(mapped_list) / len(mapped_list)), 2)
 
-        # result_date
-        result_date = None
-        try:
-            if info.get('earningsTimestamp'):
-                dt = datetime.fromtimestamp(int(info.get('earningsTimestamp')), tz=timezone.utc)
-                if (datetime.now(timezone.utc) - dt).days <= days:
-                    result_date = dt.isoformat()
-        except Exception:
-            result_date = None
-        if not result_date:
-            chosen_dt = None
-            try:
-                if isinstance(fin_q, pd.DataFrame) and not fin_q.empty:
-                    cols = list(fin_q.columns)
-                    try:
-                        col0 = cols[0]
-                        dt0 = pd.to_datetime(col0, utc=True, errors='coerce')
-                        if not pd.isna(dt0) and (datetime.now(timezone.utc) - dt0.to_pydatetime()).days <= days:
-                            chosen_dt = dt0.to_pydatetime()
-                    except Exception:
-                        pass
-                if not chosen_dt and isinstance(fin_y, pd.DataFrame) and not fin_y.empty:
-                    cols = list(fin_y.columns)
-                    try:
-                        col0 = cols[0]
-                        dt0 = pd.to_datetime(col0, utc=True, errors='coerce')
-                        if not pd.isna(dt0) and (datetime.now(timezone.utc) - dt0.to_pydatetime()).days <= days:
-                            chosen_dt = dt0.to_pydatetime()
-                    except Exception:
-                        pass
-            except Exception:
-                chosen_dt = None
-            if chosen_dt:
-                result_date = chosen_dt.isoformat()
+        # result date: most recent within `days` using robust extractor
+        result_date = extract_most_recent_earnings_date(t, days=days)
 
         rows.append({
             "S.No.": idx,
@@ -463,13 +528,14 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
             "Sales QoQ": sales_qoq,
             "NP YoY": np_yoy,
             "NP QoQ": np_qoq,
-            "EBIDT YoY": ebidt_yoy,
-            "EBIDT QoQ": ebidt_qoq,
+            "OpInc YoY": opinc_yoy,
+            "OpInc QoQ": opinc_qoq,
             "CE/Profit": ce_profit_ratio,
         })
         idx += 1
 
-    headers = ["S.No.", "Stock Name", "PEAD Score", "Result Date", "Forward PE", "Sales YoY", "Sales QoQ", "NP YoY", "NP QoQ", "EBIDT YoY", "EBIDT QoQ", "CE/Profit"]
+    # build markdown and csv
+    headers = ["S.No.", "Stock Name", "PEAD Score", "Result Date", "Forward PE", "Sales YoY", "Sales QoQ", "NP YoY", "NP QoQ", "OpInc YoY", "OpInc QoQ", "CE/Profit"]
     md_lines = ["| " + " | ".join(headers) + " |", "| " + " | ".join(["---"] * len(headers)) + " |"]
     def trunc(x, n=120):
         if x is None:
@@ -493,5 +559,5 @@ async def get_pead_table(tickers: str, days: int = 15) -> str:
 
 
 if __name__ == "__main__":
-    print("Starting Yahoo Finance PEAD MCP server (Sales = Net Income Before Taxes)...")
+    print("Starting Yahoo Finance PEAD MCP server (OpInc for banks; robust date)...")
     pead_server.run(transport="stdio")
